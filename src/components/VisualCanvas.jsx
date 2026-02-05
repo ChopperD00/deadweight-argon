@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Upload, Image, Sparkles, ZoomIn, ZoomOut, Move,
+  Upload, Image, Sparkles, ZoomIn, ZoomOut,
   Download, Trash2, Copy, RefreshCw, Maximize2
 } from 'lucide-react';
 
@@ -299,7 +299,7 @@ function VisualCanvas({
                 </button>
               </div>
               <div className="image-label">
-                {gen.model.toUpperCase()} // {gen.prompt.slice(0, 40)}...
+                {gen.model.toUpperCase()} {'// '}{gen.prompt.slice(0, 40)}...
               </div>
             </motion.div>
           ))}

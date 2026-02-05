@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -10,8 +10,8 @@ import ReactFlow, {
 } from 'reactflow';
 import { motion } from 'framer-motion';
 import {
-  Play, Plus, Save, Upload, Download, Trash2,
-  Image, Video, Type, Sliders, Cpu, Layers, GitBranch
+  Play, Save, Download, Trash2,
+  Image, Video, Type, Cpu, Layers, GitBranch
 } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
@@ -292,8 +292,7 @@ function NodeEditor({ onGenerate, onVideoGenerate, generations, systemStatus }) 
   const executeWorkflow = useCallback(async () => {
     setIsExecuting(true);
 
-    // Find prompt nodes and their values
-    const promptNodes = nodes.filter(n => n.type === 'prompt');
+    // Find generate nodes and execute their workflows
     const generateNodes = nodes.filter(n => n.type === 'imageGenerate' || n.type === 'videoGenerate');
 
     for (const genNode of generateNodes) {

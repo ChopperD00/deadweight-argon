@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Grid3X3, Workflow, Zap, Activity, Settings } from 'lucide-react';
+import { Grid3X3, Workflow, Zap, Activity } from 'lucide-react';
 
 function Header({ mode, onModeChange, systemStatus }) {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -40,7 +40,7 @@ function Header({ mode, onModeChange, systemStatus }) {
       <div className="header-logo">
         <div className="logo-text">
           <span className="logo-primary">DEADWEIGHT</span>
-          <span className="logo-divider">//</span>
+          <span className="logo-divider">{'//'}</span>
           <span className="logo-secondary">ENCOM INTERFACE</span>
         </div>
         <div className="logo-version">PRE-ALPHA v4.5 // INFERIS.APP</div>
