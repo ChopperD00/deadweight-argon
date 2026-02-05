@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import StatusBar from './components/StatusBar';
 import Header from './components/Header';
 import GenerationQueue from './components/GenerationQueue';
+import PasswordGate from './components/PasswordGate';
 
 // DEADWEIGHT API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:7860';
@@ -152,125 +153,127 @@ function App() {
   }, [isGenerating]);
 
   return (
-    <div className="encom-app">
-      {/* Background Effects */}
-      <div className="encom-grid-bg" />
-      <div className="encom-scanlines" />
+    <PasswordGate>
+      <div className="encom-app">
+        {/* Background Effects */}
+        <div className="encom-grid-bg" />
+        <div className="encom-scanlines" />
 
-      {/* HUD Corners */}
-      <div className="encom-hud">
-        <div className="encom-hud-corner top-left" />
-        <div className="encom-hud-corner top-right" />
-        <div className="encom-hud-corner bottom-left" />
-        <div className="encom-hud-corner bottom-right" />
-      </div>
+        {/* HUD Corners */}
+        <div className="encom-hud">
+          <div className="encom-hud-corner top-left" />
+          <div className="encom-hud-corner top-right" />
+          <div className="encom-hud-corner bottom-left" />
+          <div className="encom-hud-corner bottom-right" />
+        </div>
 
-      {/* Header */}
-      <Header
-        mode={mode}
-        onModeChange={setMode}
-        systemStatus={systemStatus}
-      />
-
-      {/* Main Layout */}
-      <div className="encom-main-layout">
-        {/* Sidebar */}
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-          currentPrompt={currentPrompt}
-          onPromptChange={setCurrentPrompt}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-          selectedBackend={selectedBackend}
-          onBackendChange={setSelectedBackend}
-          generationSettings={generationSettings}
-          onSettingsChange={setGenerationSettings}
-          onGenerate={handleGenerate}
-          onVideoGenerate={handleVideoGenerate}
-          isGenerating={isGenerating}
+        {/* Header */}
+        <Header
+          mode={mode}
+          onModeChange={setMode}
           systemStatus={systemStatus}
         />
 
-        {/* Main Content Area */}
-        <main className="encom-content">
-          <AnimatePresence mode="wait">
-            {mode === 'canvas' ? (
-              <motion.div
-                key="canvas"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-                style={{ height: '100%' }}
-              >
-                <VisualCanvas
-                  generations={generations}
-                  onGenerate={handleGenerate}
-                  isGenerating={isGenerating}
-                  currentPrompt={currentPrompt}
-                  onPromptChange={setCurrentPrompt}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="nodes"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                style={{ height: '100%' }}
-              >
-                <NodeEditor
-                  onGenerate={handleGenerate}
-                  onVideoGenerate={handleVideoGenerate}
-                  generations={generations}
-                  systemStatus={systemStatus}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
+        {/* Main Layout */}
+        <div className="encom-main-layout">
+          {/* Sidebar */}
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+            currentPrompt={currentPrompt}
+            onPromptChange={setCurrentPrompt}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            selectedBackend={selectedBackend}
+            onBackendChange={setSelectedBackend}
+            generationSettings={generationSettings}
+            onSettingsChange={setGenerationSettings}
+            onGenerate={handleGenerate}
+            onVideoGenerate={handleVideoGenerate}
+            isGenerating={isGenerating}
+            systemStatus={systemStatus}
+          />
 
-        {/* Generation Queue */}
-        <GenerationQueue
-          generations={generations}
-          onClear={() => setGenerations([])}
-          onRemove={(id) => setGenerations(prev => prev.filter(g => g.id !== id))}
+          {/* Main Content Area */}
+          <main className="encom-content">
+            <AnimatePresence mode="wait">
+              {mode === 'canvas' ? (
+                <motion.div
+                  key="canvas"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ height: '100%' }}
+                >
+                  <VisualCanvas
+                    generations={generations}
+                    onGenerate={handleGenerate}
+                    isGenerating={isGenerating}
+                    currentPrompt={currentPrompt}
+                    onPromptChange={setCurrentPrompt}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="nodes"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ height: '100%' }}
+                >
+                  <NodeEditor
+                    onGenerate={handleGenerate}
+                    onVideoGenerate={handleVideoGenerate}
+                    generations={generations}
+                    systemStatus={systemStatus}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+
+          {/* Generation Queue */}
+          <GenerationQueue
+            generations={generations}
+            onClear={() => setGenerations([])}
+            onRemove={(id) => setGenerations(prev => prev.filter(g => g.id !== id))}
+          />
+        </div>
+
+        {/* Status Bar */}
+        <StatusBar
+          isGenerating={isGenerating}
+          systemStatus={systemStatus}
+          generationsCount={generations.length}
         />
+
+        <style jsx>{`
+          .encom-app {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+          }
+
+          .encom-main-layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+          }
+
+          .encom-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+          }
+        `}</style>
       </div>
-
-      {/* Status Bar */}
-      <StatusBar
-        isGenerating={isGenerating}
-        systemStatus={systemStatus}
-        generationsCount={generations.length}
-      />
-
-      <style jsx>{`
-        .encom-app {
-          width: 100vw;
-          height: 100vh;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .encom-main-layout {
-          flex: 1;
-          display: flex;
-          overflow: hidden;
-          position: relative;
-        }
-
-        .encom-content {
-          flex: 1;
-          overflow: hidden;
-          position: relative;
-        }
-      `}</style>
-    </div>
+    </PasswordGate>
   );
 }
 
