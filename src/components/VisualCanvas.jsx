@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, Image, Sparkles, ZoomIn, ZoomOut,
-  Download, Trash2, Copy, RefreshCw, Maximize2
+  Download, Trash2, Copy, RefreshCw, Maximize2, X, HelpCircle
 } from 'lucide-react';
 
 function VisualCanvas({
@@ -18,6 +18,7 @@ function VisualCanvas({
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -48,6 +49,7 @@ function VisualCanvas({
         name: file.name,
         size: file.size
       });
+      setShowGuide(false);
     };
     reader.readAsDataURL(file);
   };
@@ -82,6 +84,7 @@ function VisualCanvas({
   };
 
   const completedGenerations = generations.filter(g => g.status === 'complete');
+  const canvasIsEmpty = completedGenerations.length === 0 && !uploadedImage && !isGenerating;
 
   return (
     <div className="visual-canvas-container">
@@ -138,6 +141,19 @@ function VisualCanvas({
             {completedGenerations.length} GENERATIONS
           </span>
         </div>
+
+        {/* Re-open Guide Button (shows when guide is dismissed) */}
+        {!showGuide && canvasIsEmpty && (
+          <div className="toolbar-group" style={{ marginLeft: 'auto' }}>
+            <button
+              className="toolbar-btn guide-reopen"
+              onClick={() => setShowGuide(true)}
+              data-tooltip="Show Guide"
+            >
+              <HelpCircle size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Canvas Area */}
@@ -161,63 +177,12 @@ function VisualCanvas({
           }}
         />
 
-        {/* Upload Zone (when empty) */}
-        {completedGenerations.length === 0 && !uploadedImage && (
-          <div className="upload-zone">
-            <motion.div
-              className="upload-content"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="upload-icon">
-                <Image size={48} />
-              </div>
-              <h3>VISUAL WORKSPACE</h3>
-              <p>Drop an image here or use the sidebar to generate</p>
-              <button
-                className="encom-btn encom-btn-primary"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload size={14} />
-                UPLOAD IMAGE
-              </button>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Quick Prompt Bar */}
-        <div className="quick-prompt-bar">
-          <input
-            type="text"
-            className="quick-prompt-input"
-            value={currentPrompt}
-            onChange={(e) => onPromptChange(e.target.value)}
-            placeholder="Quick generate: describe your image..."
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && currentPrompt.trim()) {
-                onGenerate();
-              }
-            }}
-          />
-          <button
-            className="quick-generate-btn"
-            onClick={() => onGenerate()}
-            disabled={isGenerating || !currentPrompt.trim()}
-          >
-            {isGenerating ? (
-              <RefreshCw size={16} className="spinning" />
-            ) : (
-              <Sparkles size={16} />
-            )}
-          </button>
-        </div>
-
         {/* Generated Images */}
         <div
           className="canvas-content"
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            pointerEvents: canvasIsEmpty ? 'none' : 'auto'
           }}
         >
           {/* Uploaded Image */}
@@ -269,7 +234,6 @@ function VisualCanvas({
                   className="action-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Download image
                     const link = document.createElement('a');
                     link.href = gen.result;
                     link.download = `generation-${gen.id}.png`;
@@ -321,6 +285,101 @@ function VisualCanvas({
               </div>
             </motion.div>
           )}
+        </div>
+
+        {/* Guide Popup (floating gold card) */}
+        <AnimatePresence>
+          {showGuide && canvasIsEmpty && (
+            <div className="guide-overlay">
+              <motion.div
+                className="guide-popup"
+                initial={{ opacity: 0, scale: 0.9, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+              >
+                <div className="guide-glow-bar" />
+
+                <button
+                  className="guide-close"
+                  onClick={() => setShowGuide(false)}
+                >
+                  <X size={14} />
+                </button>
+
+                <div className="guide-header">
+                  <span className="guide-slash">{'//'}</span>
+                  WORKSPACE GUIDE
+                </div>
+
+                <div className="guide-body">
+                  <div className="guide-icon">
+                    <Image size={36} />
+                  </div>
+
+                  <h3 className="guide-title">VISUAL WORKSPACE</h3>
+                  <p className="guide-desc">
+                    Drop an image onto the canvas, upload a file, or use the
+                    sidebar to generate with AI models.
+                  </p>
+
+                  <div className="guide-actions">
+                    <button
+                      className="guide-btn"
+                      onClick={() => {
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      <Upload size={14} />
+                      UPLOAD IMAGE
+                    </button>
+                  </div>
+
+                  <div className="guide-hints">
+                    <div className="guide-hint">
+                      <span className="hint-key">ALT + DRAG</span>
+                      <span className="hint-desc">Pan canvas</span>
+                    </div>
+                    <div className="guide-hint">
+                      <span className="hint-key">TOOLBAR +/-</span>
+                      <span className="hint-desc">Zoom in/out</span>
+                    </div>
+                    <div className="guide-hint">
+                      <span className="hint-key">PROMPT BAR</span>
+                      <span className="hint-desc">Quick generate below</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Quick Prompt Bar */}
+        <div className="quick-prompt-bar">
+          <input
+            type="text"
+            className="quick-prompt-input"
+            value={currentPrompt}
+            onChange={(e) => onPromptChange(e.target.value)}
+            placeholder="Quick generate: describe your image..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && currentPrompt.trim()) {
+                onGenerate();
+              }
+            }}
+          />
+          <button
+            className="quick-generate-btn"
+            onClick={() => onGenerate()}
+            disabled={isGenerating || !currentPrompt.trim()}
+          >
+            {isGenerating ? (
+              <RefreshCw size={16} className="spinning" />
+            ) : (
+              <Sparkles size={16} />
+            )}
+          </button>
         </div>
       </div>
 
@@ -420,6 +479,17 @@ function VisualCanvas({
           background: rgba(0, 238, 238, 0.1);
         }
 
+        .toolbar-btn.guide-reopen {
+          color: var(--encom-gold-dim);
+          border-color: var(--encom-gold-dim);
+        }
+
+        .toolbar-btn.guide-reopen:hover {
+          color: var(--encom-gold);
+          border-color: var(--encom-gold);
+          background: rgba(255, 204, 0, 0.1);
+        }
+
         .zoom-level {
           font-family: var(--font-mono);
           font-size: 11px;
@@ -473,40 +543,179 @@ function VisualCanvas({
           transform-origin: center center;
         }
 
-        .upload-zone {
+        /* === GUIDE POPUP (Gold Accent) === */
+        .guide-overlay {
           position: absolute;
           inset: 0;
           display: flex;
           align-items: center;
           justify-content: center;
+          z-index: 15;
+          pointer-events: none;
         }
 
-        .upload-content {
-          text-align: center;
-          padding: 40px;
+        .guide-popup {
+          pointer-events: all;
+          background: rgba(0, 0, 0, 0.92);
+          border: 1px solid rgba(255, 204, 0, 0.4);
+          border-radius: 6px;
+          width: 400px;
+          max-width: 90vw;
+          position: relative;
+          box-shadow:
+            0 0 40px rgba(255, 204, 0, 0.08),
+            0 0 80px rgba(255, 204, 0, 0.04),
+            inset 0 0 30px rgba(255, 204, 0, 0.02);
         }
 
-        .upload-icon {
-          color: var(--encom-cyan);
-          margin-bottom: 20px;
-          opacity: 0.5;
+        .guide-glow-bar {
+          position: absolute;
+          top: -1px;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, transparent, var(--encom-gold), transparent);
+          border-radius: 6px 6px 0 0;
         }
 
-        .upload-content h3 {
+        .guide-close {
+          position: absolute;
+          top: 10px;
+          right: 12px;
+          background: none;
+          border: 1px solid transparent;
+          border-radius: 4px;
+          color: var(--encom-gray);
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          z-index: 2;
+        }
+
+        .guide-close:hover {
+          color: var(--encom-gold);
+          border-color: var(--encom-gold-dim);
+          background: rgba(255, 204, 0, 0.1);
+        }
+
+        .guide-header {
           font-family: var(--font-display);
-          font-size: 18px;
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          color: var(--encom-gold);
+          padding: 12px 16px;
+          border-bottom: 1px solid rgba(255, 204, 0, 0.15);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .guide-slash {
+          color: var(--encom-gold-dim);
+          font-weight: 300;
+        }
+
+        .guide-body {
+          padding: 28px 24px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 14px;
+        }
+
+        .guide-icon {
+          color: var(--encom-gold);
+          opacity: 0.6;
+        }
+
+        .guide-title {
+          font-family: var(--font-display);
+          font-size: 15px;
           font-weight: 500;
           letter-spacing: 3px;
-          color: var(--encom-white);
-          margin-bottom: 8px;
+          color: var(--encom-gold);
+          margin: 0;
         }
 
-        .upload-content p {
+        .guide-desc {
+          font-family: var(--font-mono);
           font-size: 12px;
           color: var(--encom-gray-light);
-          margin-bottom: 24px;
+          text-align: center;
+          line-height: 1.5;
+          margin: 0;
+          max-width: 320px;
         }
 
+        .guide-actions {
+          display: flex;
+          gap: 10px;
+          margin-top: 8px;
+        }
+
+        .guide-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-family: var(--font-display);
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: var(--encom-gold);
+          background: rgba(255, 204, 0, 0.1);
+          border: 1px solid var(--encom-gold-dim);
+          padding: 10px 22px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border-radius: 2px;
+        }
+
+        .guide-btn:hover {
+          background: rgba(255, 204, 0, 0.2);
+          border-color: var(--encom-gold);
+          box-shadow: 0 0 20px rgba(255, 204, 0, 0.25);
+        }
+
+        .guide-hints {
+          display: flex;
+          gap: 16px;
+          margin-top: 12px;
+          padding-top: 14px;
+          border-top: 1px solid rgba(255, 204, 0, 0.1);
+        }
+
+        .guide-hint {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .hint-key {
+          font-family: var(--font-display);
+          font-size: 8px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          color: var(--encom-gold-dim);
+          background: rgba(255, 204, 0, 0.08);
+          border: 1px solid rgba(255, 204, 0, 0.15);
+          padding: 3px 8px;
+          border-radius: 2px;
+        }
+
+        .hint-desc {
+          font-family: var(--font-mono);
+          font-size: 9px;
+          color: var(--encom-gray);
+        }
+
+        /* === QUICK PROMPT BAR === */
         .quick-prompt-bar {
           position: absolute;
           bottom: 20px;
@@ -567,6 +776,7 @@ function VisualCanvas({
           to { transform: rotate(360deg); }
         }
 
+        /* === CANVAS CONTENT === */
         .canvas-content {
           position: absolute;
           inset: 0;
@@ -665,6 +875,7 @@ function VisualCanvas({
           letter-spacing: 2px;
         }
 
+        /* === IMAGE DETAIL PANEL === */
         .image-detail-panel {
           position: absolute;
           top: 60px;
