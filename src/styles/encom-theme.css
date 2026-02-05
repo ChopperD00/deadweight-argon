@@ -1,0 +1,587 @@
+/* DEADWEIGHT ENCOM Theme - Tron Legacy Boardroom Aesthetic */
+
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap');
+
+:root {
+  /* ENCOM Color Palette */
+  --encom-black: #000000;
+  --encom-dark: #0a0a0a;
+  --encom-cyan: #00EEEE;
+  --encom-cyan-dim: #00aaaa;
+  --encom-cyan-glow: rgba(0, 238, 238, 0.3);
+  --encom-gold: #FFCC00;
+  --encom-gold-dim: #cc9900;
+  --encom-orange: #FF9933;
+  --encom-white: #ffffff;
+  --encom-gray-light: #aaaaaa;
+  --encom-gray: #666666;
+  --encom-gray-dark: #333333;
+  --encom-panel-bg: hsla(0, 0%, 0%, 0.85);
+  --encom-panel-border: hsla(180, 100%, 47%, 0.3);
+
+  /* Typography */
+  --font-display: 'Orbitron', sans-serif;
+  --font-mono: 'Inconsolata', monospace;
+
+  /* Animations */
+  --pulse-duration: 2s;
+  --glow-intensity: 0 0 20px;
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--encom-black);
+  font-family: var(--font-mono);
+  color: var(--encom-white);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Grid Background Pattern */
+.encom-grid-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(var(--encom-gray-dark) 1px, transparent 1px),
+    linear-gradient(90deg, var(--encom-gray-dark) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Scanline Effect */
+.encom-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.3;
+}
+
+/* Pulsing Glow Animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--encom-cyan-dim),
+                0 0 10px var(--encom-cyan-glow),
+                inset 0 0 5px rgba(0, 238, 238, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--encom-cyan),
+                0 0 30px var(--encom-cyan-glow),
+                inset 0 0 10px rgba(0, 238, 238, 0.2);
+  }
+}
+
+@keyframes text-glow {
+  0%, 100% { text-shadow: 0 0 5px var(--encom-cyan-dim); }
+  50% { text-shadow: 0 0 15px var(--encom-cyan), 0 0 25px var(--encom-cyan-glow); }
+}
+
+@keyframes border-pulse {
+  0%, 100% { border-color: var(--encom-cyan-dim); }
+  50% { border-color: var(--encom-cyan); }
+}
+
+@keyframes data-stream {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+/* ENCOM Panel Styles */
+.encom-panel {
+  background: var(--encom-panel-bg);
+  border: 1px solid var(--encom-cyan-dim);
+  border-radius: 2px;
+  position: relative;
+  animation: pulse-glow var(--pulse-duration) ease-in-out infinite;
+}
+
+.encom-panel::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--encom-cyan), transparent);
+}
+
+.encom-panel-header {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--encom-cyan);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--encom-gray-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.encom-panel-header::before {
+  content: '//';
+  margin-right: 8px;
+  color: var(--encom-gold);
+}
+
+.encom-panel-content {
+  padding: 12px;
+}
+
+/* ENCOM Buttons */
+.encom-btn {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--encom-cyan);
+  background: transparent;
+  border: 1px solid var(--encom-cyan-dim);
+  padding: 8px 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.encom-btn:hover {
+  background: rgba(0, 238, 238, 0.1);
+  border-color: var(--encom-cyan);
+  box-shadow: 0 0 15px var(--encom-cyan-glow);
+}
+
+.encom-btn:active {
+  background: rgba(0, 238, 238, 0.2);
+}
+
+.encom-btn-primary {
+  background: rgba(0, 238, 238, 0.15);
+  border-color: var(--encom-cyan);
+}
+
+.encom-btn-gold {
+  color: var(--encom-gold);
+  border-color: var(--encom-gold-dim);
+}
+
+.encom-btn-gold:hover {
+  background: rgba(255, 204, 0, 0.1);
+  border-color: var(--encom-gold);
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+}
+
+/* ENCOM Input Fields */
+.encom-input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--encom-white);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--encom-gray-dark);
+  padding: 10px 12px;
+  width: 100%;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.encom-input:focus {
+  border-color: var(--encom-cyan);
+  box-shadow: 0 0 10px var(--encom-cyan-glow), inset 0 0 5px rgba(0, 238, 238, 0.1);
+}
+
+.encom-input::placeholder {
+  color: var(--encom-gray);
+}
+
+.encom-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ENCOM Select/Dropdown */
+.encom-select {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--encom-white);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--encom-gray-dark);
+  padding: 10px 12px;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300EEEE' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.encom-select:focus {
+  border-color: var(--encom-cyan);
+  box-shadow: 0 0 10px var(--encom-cyan-glow);
+}
+
+/* ENCOM Slider */
+.encom-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--encom-gray-dark);
+  outline: none;
+  border-radius: 2px;
+}
+
+.encom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--encom-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--encom-cyan);
+}
+
+.encom-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--encom-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px var(--encom-cyan);
+}
+
+/* Data Display Elements */
+.encom-data-value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--encom-cyan);
+  animation: text-glow var(--pulse-duration) ease-in-out infinite;
+}
+
+.encom-data-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--encom-gray-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Status Indicators */
+.encom-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.encom-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse-glow 1s ease-in-out infinite;
+}
+
+.encom-status-dot.online { background: var(--encom-cyan); }
+.encom-status-dot.warning { background: var(--encom-gold); }
+.encom-status-dot.error { background: #ff4444; }
+.encom-status-dot.offline { background: var(--encom-gray); }
+
+/* Progress Bar */
+.encom-progress {
+  height: 4px;
+  background: var(--encom-gray-dark);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.encom-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--encom-cyan-dim), var(--encom-cyan));
+  box-shadow: 0 0 10px var(--encom-cyan-glow);
+  transition: width 0.3s ease;
+}
+
+/* Tab Navigation */
+.encom-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--encom-gray-dark);
+}
+
+.encom-tab {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--encom-gray-light);
+  background: transparent;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.encom-tab:hover {
+  color: var(--encom-cyan);
+}
+
+.encom-tab.active {
+  color: var(--encom-cyan);
+}
+
+.encom-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--encom-cyan);
+  box-shadow: 0 0 10px var(--encom-cyan);
+}
+
+/* Tooltip */
+.encom-tooltip {
+  position: relative;
+}
+
+.encom-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: var(--encom-panel-bg);
+  border: 1px solid var(--encom-cyan-dim);
+  color: var(--encom-white);
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.encom-tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Node Editor Specific */
+.encom-node {
+  background: var(--encom-panel-bg);
+  border: 1px solid var(--encom-cyan-dim);
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.encom-node-header {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--encom-gold);
+  padding: 8px 12px;
+  background: rgba(255, 204, 0, 0.1);
+  border-bottom: 1px solid var(--encom-gray-dark);
+  border-radius: 3px 3px 0 0;
+}
+
+.encom-node-body {
+  padding: 12px;
+}
+
+.encom-node-port {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--encom-cyan);
+  background: var(--encom-black);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.encom-node-port:hover {
+  background: var(--encom-cyan);
+  box-shadow: 0 0 10px var(--encom-cyan);
+}
+
+.encom-node-port.connected {
+  background: var(--encom-cyan);
+}
+
+/* Canvas Area */
+.encom-canvas {
+  background: radial-gradient(ellipse at center, rgba(0, 40, 40, 0.3) 0%, var(--encom-black) 70%);
+  position: relative;
+  overflow: hidden;
+}
+
+.encom-canvas-dropzone {
+  border: 2px dashed var(--encom-gray-dark);
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.encom-canvas-dropzone.active {
+  border-color: var(--encom-cyan);
+  background: rgba(0, 238, 238, 0.05);
+}
+
+/* Loading Spinner */
+.encom-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--encom-gray-dark);
+  border-top-color: var(--encom-cyan);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--encom-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--encom-gray-dark);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--encom-cyan-dim);
+}
+
+/* HUD Elements */
+.encom-hud {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.encom-hud-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+
+.encom-hud-corner.top-left {
+  top: 10px;
+  left: 10px;
+  border-top: 2px solid var(--encom-cyan);
+  border-left: 2px solid var(--encom-cyan);
+}
+
+.encom-hud-corner.top-right {
+  top: 10px;
+  right: 10px;
+  border-top: 2px solid var(--encom-cyan);
+  border-right: 2px solid var(--encom-cyan);
+}
+
+.encom-hud-corner.bottom-left {
+  bottom: 10px;
+  left: 10px;
+  border-bottom: 2px solid var(--encom-cyan);
+  border-left: 2px solid var(--encom-cyan);
+}
+
+.encom-hud-corner.bottom-right {
+  bottom: 10px;
+  right: 10px;
+  border-bottom: 2px solid var(--encom-cyan);
+  border-right: 2px solid var(--encom-cyan);
+}
+
+/* Image Preview Card */
+.encom-image-card {
+  background: var(--encom-panel-bg);
+  border: 1px solid var(--encom-gray-dark);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.encom-image-card:hover {
+  border-color: var(--encom-cyan);
+  box-shadow: 0 0 20px var(--encom-cyan-glow);
+}
+
+.encom-image-card img {
+  width: 100%;
+  display: block;
+}
+
+.encom-image-card-info {
+  padding: 10px;
+  font-size: 11px;
+}
+
+/* Generation Queue */
+.encom-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 3px solid var(--encom-cyan);
+  margin-bottom: 8px;
+}
+
+.encom-queue-item.processing {
+  border-left-color: var(--encom-gold);
+}
+
+.encom-queue-item.complete {
+  border-left-color: #44ff44;
+}
+
+.encom-queue-item.error {
+  border-left-color: #ff4444;
+}
