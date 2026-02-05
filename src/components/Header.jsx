@@ -41,7 +41,7 @@ function Header({ mode, onModeChange, systemStatus }) {
         <div className="logo-text">
           <span className="logo-primary">DEADWEIGHT</span>
           <span className="logo-divider">{'//'}</span>
-          <span className="logo-secondary">ENCOM INTERFACE</span>
+          <span className="logo-secondary">ARGON INTERFACE</span>
         </div>
         <div className="logo-version">PRE-ALPHA v4.5 // INFERIS.APP</div>
       </div>
