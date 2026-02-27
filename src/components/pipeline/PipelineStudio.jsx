@@ -12,7 +12,7 @@ const SUB_TABS = [
   { id: 'video', label: 'VIDEO EDITOR', icon: '▶' },
 ];
 
-export default function PipelineStudio({ onGenerate, onVideoGenerate, generations, systemStatus }) {
+export default function PipelineStudio({ onGenerate, onVideoGenerate, generations }) {
   const [activeTab, setActiveTab] = useState('character');
   const [personas, setPersonas] = useState([]);
 
