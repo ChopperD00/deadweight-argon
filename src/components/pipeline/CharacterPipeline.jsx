@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import argon from '../../lib/argon-client';
 
 const STAGES = [
   { id: 'reference', label: 'REFERENCE', sub: 'Upload / Describe' },
@@ -9,10 +10,11 @@ const STAGES = [
   { id: 'output',    label: 'OUTPUT',    sub: 'Export / Save' },
 ];
 
+const STAGE_LABELS = ['', 'IDEATE', 'REFINE', 'CHAR SHEET'];
 const IDEATION_MODELS = ['Flux (Krea)', 'SDXL', 'Flux Pro', 'Stable Diffusion 3'];
 const VIDEO_MODELS   = ['Dream Machine', 'Kling 3.0', 'Runway Gen-3', 'Luma'];
 
-export default function CharacterPipeline({ onGenerate, onVideoGenerate, onSavePersona }) {
+export default function CharacterPipeline({ onSavePersona }) {
   const [activeStage, setActiveStage]   = useState(0);
   const [done, setDone]                 = useState(new Set());
   const [referenceImage, setRef]        = useState(null);
@@ -21,6 +23,7 @@ export default function CharacterPipeline({ onGenerate, onVideoGenerate, onSaveP
   const [ideation, setIdeation]         = useState(IDEATION_MODELS[0]);
   const [video, setVideo]               = useState(VIDEO_MODELS[0]);
   const [isRunning, setIsRunning]       = useState(false);
+  const [stageImages, setStageImages]   = useState({});
   const fileRef = useRef(null);
 
   const loadFile = (file) => {
@@ -35,6 +38,7 @@ export default function CharacterPipeline({ onGenerate, onVideoGenerate, onSaveP
   const runPipeline = async () => {
     if (!desc && !referenceImage) return;
     setIsRunning(true);
+    setStageImages({});
     for (let i = 1; i <= 3; i++) {
       setActiveStage(i);
       const prompts = [
@@ -42,7 +46,16 @@ export default function CharacterPipeline({ onGenerate, onVideoGenerate, onSaveP
         `refined character study, ${desc}`,
         `character sheet multiple angles front 3/4 side back, ${desc}${name ? ', ' + name : ''}`,
       ];
-      await onGenerate(prompts[i - 1], { width: 1024, height: 1024, steps: i === 2 ? 28 : 4 });
+      try {
+        const job = await argon.generateImage(
+          { prompt: prompts[i - 1], width: 1024, height: 1024, steps: i === 2 ? 28 : 4 },
+          { wait: true }
+        );
+        const imageUrl = job.result?.image || job.result?.output || null;
+        setStageImages(prev => ({ ...prev, [i]: imageUrl }));
+      } catch (err) {
+        console.error(`Pipeline stage ${i} failed:`, err.message);
+      }
       setDone(prev => new Set([...prev, i]));
       await delay(800);
     }
@@ -112,15 +125,22 @@ export default function CharacterPipeline({ onGenerate, onVideoGenerate, onSaveP
         <div className="panel right">
           <div className="ph">PIPELINE OUTPUT</div>
           <div className="output-area">
-            {activeStage === 4
-              ? <div className="complete"><div className="ci">✓</div><div className="cl">PIPELINE COMPLETE</div><div className="cs">Character asset generated</div></div>
-              : isRunning
-                ? <div className="running-state">
-                    <div className="rl">{STAGES[activeStage]?.label}</div>
-                    <div className="pbar"><motion.div className="pfill" animate={{ width: `${(activeStage / 4) * 100}%` }} transition={{ duration: 0.6 }} /></div>
-                  </div>
-                : <div className="empty">Output will appear here</div>
-            }
+            {isRunning ? (
+              <div className="running-state">
+                <div className="rl">{STAGES[activeStage]?.label}</div>
+                <div className="pbar"><motion.div className="pfill" animate={{ width: `${(activeStage / 4) * 100}%` }} transition={{ duration: 0.6 }} /></div>
+              </div>
+            ) : activeStage === 4 ? (
+              <div className="complete"><div className="ci">✓</div><div className="cl">PIPELINE COMPLETE</div><div className="cs">Character asset generated</div></div>
+            ) : (
+              <div className="empty">Output will appear here</div>
+            )}
+            {[1, 2, 3].filter(si => stageImages[si]).map(si => (
+              <div key={si} className="stage-img-wrap">
+                <div className="si-label">{STAGE_LABELS[si]}</div>
+                <img src={stageImages[si]} alt={STAGE_LABELS[si]} className="si-img" />
+              </div>
+            ))}
           </div>
           <div className="out-actions">
             <button className="abtn" onClick={() => onSavePersona({ name, desc, referenceImage, model: ideation })} disabled={activeStage < 4}>◈ SAVE AS PERSONA</button>
@@ -162,15 +182,18 @@ export default function CharacterPipeline({ onGenerate, onVideoGenerate, onSaveP
         .runbtn:hover:not(:disabled) { background:rgba(0,238,238,.2); box-shadow:0 0 16px rgba(0,238,238,.2); }
         .runbtn:disabled { opacity:.4; cursor:not-allowed; } .runbtn.running { border-color:var(--encom-gold); color:var(--encom-gold); }
         .right { padding:16px; }
-        .output-area { flex:1; display:flex; align-items:center; justify-content:center; border:1px solid var(--encom-gray-dark); background:rgba(0,0,0,.3); margin:12px 0; min-height:180px; }
-        .empty { color:var(--encom-gray-dark); font-family:var(--font-mono); font-size:12px; }
-        .running-state { display:flex; flex-direction:column; align-items:center; gap:14px; width:75%; }
+        .output-area { flex:1; display:flex; flex-direction:column; align-items:center; border:1px solid var(--encom-gray-dark); background:rgba(0,0,0,.3); margin:12px 0; overflow-y:auto; padding:12px; gap:10px; min-height:160px; }
+        .empty { color:var(--encom-gray-dark); font-family:var(--font-mono); font-size:12px; margin:auto; }
+        .running-state { display:flex; flex-direction:column; align-items:center; gap:14px; width:75%; flex-shrink:0; }
         .rl { font-family:var(--font-display); font-size:11px; color:var(--encom-gold); letter-spacing:2px; }
         .pbar { width:100%; height:2px; background:var(--encom-gray-dark); }
         .pfill { height:100%; background:var(--encom-cyan); box-shadow:0 0 8px var(--encom-cyan); }
-        .complete { display:flex; flex-direction:column; align-items:center; gap:8px; }
+        .complete { display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0; }
         .ci { font-size:30px; color:var(--encom-gold); } .cl { font-family:var(--font-display); font-size:13px; color:var(--encom-cyan); letter-spacing:2px; } .cs { font-family:var(--font-mono); font-size:10px; color:var(--encom-gray-light); }
-        .out-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .stage-img-wrap { width:100%; display:flex; flex-direction:column; gap:4px; }
+        .si-label { font-family:var(--font-display); font-size:8px; color:var(--encom-gold); letter-spacing:1px; }
+        .si-img { width:100%; object-fit:contain; border:1px solid var(--encom-cyan-dim); }
+        .out-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 0 4px; flex-shrink:0; }
         .abtn { padding:10px; background:rgba(0,0,0,.4); border:1px solid var(--encom-gray-dark); color:var(--encom-gray-light); font-family:var(--font-display); font-size:10px; letter-spacing:1px; cursor:pointer; transition:all .2s; }
         .abtn:hover:not(:disabled) { border-color:var(--encom-cyan-dim); color:var(--encom-cyan); } .abtn:disabled { opacity:.3; cursor:not-allowed; }
       `}</style>

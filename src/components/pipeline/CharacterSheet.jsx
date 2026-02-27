@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import argon from '../../lib/argon-client';
 
 const POSES = [
   { id: 'front',     label: 'FRONT',    desc: 'full body, front view facing camera' },
@@ -10,7 +11,7 @@ const POSES = [
   { id: 'portrait',  label: 'PORTRAIT', desc: 'close-up portrait, head and shoulders' },
 ];
 
-export default function CharacterSheet({ onGenerate, onSavePersona }) {
+export default function CharacterSheet({ onSavePersona }) {
   const [ref, setRef]               = useState(null);
   const [name, setName]             = useState('');
   const [desc, setDesc]             = useState('');
@@ -28,8 +29,13 @@ export default function CharacterSheet({ onGenerate, onSavePersona }) {
     for (const pose of POSES.filter(p => selected.has(p.id))) {
       setCurrent(pose.id);
       const prompt = `${name ? name + ', ' : ''}${desc}, ${pose.desc}${styleLock ? ', ' + styleLock : ''}, character sheet style, white background`;
-      await onGenerate(prompt, { width: 768, height: 1024 });
-      setGenerated(prev => ({ ...prev, [pose.id]: true }));
+      try {
+        const job = await argon.generateImage({ prompt, width: 768, height: 1024 }, { wait: true });
+        const imageUrl = job.result?.image || job.result?.output || null;
+        setGenerated(prev => ({ ...prev, [pose.id]: { imageUrl } }));
+      } catch (err) {
+        setGenerated(prev => ({ ...prev, [pose.id]: { imageUrl: null, error: err.message } }));
+      }
       await new Promise(r => setTimeout(r, 400));
     }
     setCurrent(null);
@@ -61,7 +67,7 @@ export default function CharacterSheet({ onGenerate, onSavePersona }) {
             ))}
           </div>
           <button className="genbtn" onClick={generateAll} disabled={isGen || (!desc && !ref)}>
-            {isGen ? `◈ GENERATING ${currentPose?.toUpperCase()}...` : `▶ GENERATE SHEET (${selected.size} POSES)`}
+            {isGen ? `◈ GENERATING ${currentPose?.toUpperCase() || ''}...` : `▶ GENERATE SHEET (${selected.size} POSES)`}
           </button>
           <button className="savebtn" onClick={() => onSavePersona({ name, desc, style: styleLock, ref, poses: generated })} disabled={Object.keys(generated).length === 0}>
             ◈ SAVE AS PERSONA
@@ -79,8 +85,11 @@ export default function CharacterSheet({ onGenerate, onSavePersona }) {
               <div className="pframe">
                 {currentPose === pose.id
                   ? <div className="gind"><div className="ring" /><span>GENERATING</span></div>
-                  : generated[pose.id] ? <div className="pdone">✓ GENERATED</div>
-                  : <div className="pempty">PENDING</div>
+                  : generated[pose.id]?.imageUrl
+                    ? <img src={generated[pose.id].imageUrl} alt={pose.label} className="pimg" />
+                    : generated[pose.id]
+                      ? <div className="pdone">✓ GENERATED</div>
+                      : <div className="pempty">PENDING</div>
                 }
               </div>
             </motion.div>
@@ -114,7 +123,8 @@ export default function CharacterSheet({ onGenerate, onSavePersona }) {
         .pc { background:rgba(0,0,0,.5); border:1px solid var(--encom-gray-dark); display:flex; flex-direction:column; overflow:hidden; transition:border-color .3s; }
         .pc.gen { border-color:var(--encom-gold); } .pc.done { border-color:var(--encom-cyan-dim); } .pc.off { opacity:.2; }
         .plabel { padding:6px 10px; font-family:var(--font-display); font-size:9px; color:var(--encom-cyan); letter-spacing:1px; border-bottom:1px solid var(--encom-gray-dark); background:rgba(0,238,238,.03); }
-        .pframe { flex:1; min-height:100px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.3); }
+        .pframe { flex:1; min-height:100px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.3); overflow:hidden; }
+        .pimg { width:100%; height:100%; object-fit:contain; }
         .gind { display:flex; flex-direction:column; align-items:center; gap:6px; }
         .ring { width:18px; height:18px; border:2px solid var(--encom-gray-dark); border-top-color:var(--encom-gold); border-radius:50%; animation:spin 1s linear infinite; }
         .gind span { font-family:var(--font-mono); font-size:8px; color:var(--encom-gold); }

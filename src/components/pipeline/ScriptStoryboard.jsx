@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import argon from '../../lib/argon-client';
 
 function parseScript(text) {
   if (!text.trim()) return [];
@@ -31,7 +32,7 @@ function parseScript(text) {
   return scenes;
 }
 
-export default function ScriptStoryboard({ onGenerate }) {
+export default function ScriptStoryboard() {
   const [text, setText]           = useState('');
   const [scenes, setScenes]       = useState([]);
   const [parsed, setParsed]       = useState(false);
@@ -45,8 +46,16 @@ export default function ScriptStoryboard({ onGenerate }) {
     if (!s) return;
     setActiveId(id);
     setScenes(p => p.map(x => x.id === id ? { ...x, status: 'generating' } : x));
-    await onGenerate(s.prompt || s.body || s.header, { width: 1024, height: 576 });
-    setScenes(p => p.map(x => x.id === id ? { ...x, status: 'complete' } : x));
+    try {
+      const job = await argon.generateImage(
+        { prompt: s.prompt || s.body || s.header, width: 1024, height: 576 },
+        { wait: true }
+      );
+      const imageUrl = job.result?.image || job.result?.output || null;
+      setScenes(p => p.map(x => x.id === id ? { ...x, status: 'complete', image: imageUrl } : x));
+    } catch (err) {
+      setScenes(p => p.map(x => x.id === id ? { ...x, status: 'error' } : x));
+    }
     setActiveId(null);
   };
 

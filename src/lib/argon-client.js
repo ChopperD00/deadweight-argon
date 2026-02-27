@@ -220,6 +220,14 @@ export async function generatePose(params, { wait = false, pollOpts } = {}) {
   return pollJob(jobId, pollOpts);
 }
 
+export async function generateVideo(params, { wait = false, pollOpts } = {}) {
+  const { jobId } = await apiFetch('/api/generate/video', {
+    method: 'POST', body: JSON.stringify(params),
+  });
+  if (!wait) return { jobId };
+  return pollJob(jobId, pollOpts);
+}
+
 // ---------------------------------------------------------------------------
 // LoRA management
 // ---------------------------------------------------------------------------
@@ -245,7 +253,7 @@ const argon = {
   BASE_URL, health,
   analyzeMotion, getMotionTrack, analyzeExpression, analyzeFace, analyzeSegment,
   transferExpression, transferSequence,
-  generateImage, generatePose,
+  generateImage, generatePose, generateVideo,
   downloadLora, listLoras,
   getJob, pollJob,
   openEventStream,

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import argon from '../../lib/argon-client';
 
 const ART_STYLES = ['ENCOM GRID','NOIR SKETCH','ANIME CEL','OIL PAINT','GLITCH ART','WATERCOLOR','PIXEL ART','BRUTALIST'];
 
@@ -21,7 +22,7 @@ function detectBeats(buffer, threshold = 0.15, minGap = 0.28) {
   return beats;
 }
 
-export default function VideoEditor({ onVideoGenerate, generations }) {
+export default function VideoEditor({ generations }) {
   const [audioFile, setAudioFile]   = useState(null);
   const [audioBuf, setAudioBuf]     = useState(null);
   const [beats, setBeats]           = useState([]);
@@ -53,7 +54,7 @@ export default function VideoEditor({ onVideoGenerate, generations }) {
       const segDur = dur / nScenes;
       setScenes(Array.from({ length: nScenes }, (_, i) => ({
         id: i, start: i * segDur, end: Math.min((i+1) * segDur, dur),
-        style: ART_STYLES[i % ART_STYLES.length], prompt: '', status: 'pending',
+        style: ART_STYLES[i % ART_STYLES.length], prompt: '', status: 'pending', videoUrl: null,
       })));
       setTimeout(() => drawWave(decoded, b), 80);
     } catch (err) { console.error('Audio error', err); }
@@ -105,8 +106,17 @@ export default function VideoEditor({ onVideoGenerate, generations }) {
   const genAll = async () => {
     for (const s of scenes) {
       setScenes(p => p.map(x => x.id === s.id ? { ...x, status: 'generating' } : x));
-      await onVideoGenerate({ prompt: s.prompt || `cinematic scene, ${s.style.toLowerCase()} style`, backend: 'dream_machine', duration: Math.round(s.end - s.start) });
-      setScenes(p => p.map(x => x.id === s.id ? { ...x, status: 'complete' } : x));
+      try {
+        const job = await argon.generateVideo({
+          prompt: s.prompt || `cinematic scene, ${s.style.toLowerCase()} style`,
+          backend: 'dream_machine',
+          duration: Math.round(s.end - s.start)
+        }, { wait: true });
+        const videoUrl = job.result?.video || job.result?.output || null;
+        setScenes(p => p.map(x => x.id === s.id ? { ...x, status: 'complete', videoUrl } : x));
+      } catch (err) {
+        setScenes(p => p.map(x => x.id === s.id ? { ...x, status: 'error' } : x));
+      }
       await new Promise(r => setTimeout(r, 300));
     }
   };

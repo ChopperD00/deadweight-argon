@@ -9,6 +9,7 @@ import GenerationQueue from './components/GenerationQueue';
 import PasswordGate from './components/PasswordGate';
 import EncomEngine from './components/EncomEngine';
 import PipelineStudio from './components/pipeline/PipelineStudio';
+import argon from './lib/argon-client';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:7860';
 
@@ -40,37 +41,54 @@ function App() {
   };
 
   const handleGenerate = useCallback(async (prompt, options = {}) => {
-    if (isGenerating) return;
+    if (isGenerating) return null;
     setIsGenerating(true);
     const id = Date.now().toString();
-    setGenerations(prev => [{ id, prompt: prompt || currentPrompt, status: 'processing', model: selectedModel, backend: selectedBackend, timestamp: new Date().toISOString(), settings: { ...generationSettings, ...options } }, ...prev]);
+    setGenerations(prev => [{
+      id, prompt: prompt || currentPrompt, status: 'processing',
+      model: selectedModel, backend: selectedBackend,
+      timestamp: new Date().toISOString(),
+      settings: { ...generationSettings, ...options }
+    }, ...prev]);
     try {
-      const r = await fetch(`${API_BASE_URL}/api/generate`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt || currentPrompt, model: selectedModel, backend: selectedBackend, ...generationSettings, ...options })
-      });
-      if (r.ok) {
-        const data = await r.json();
-        setGenerations(prev => prev.map(g => g.id === id ? { ...g, status: 'complete', result: data.image, metadata: data.metadata } : g));
-      } else throw new Error('Generation failed');
+      const job = await argon.generateImage(
+        { prompt: prompt || currentPrompt, model: selectedModel, backend: selectedBackend, ...generationSettings, ...options },
+        { wait: true }
+      );
+      const imageUrl = job.result?.image || job.result?.output || null;
+      setGenerations(prev => prev.map(g =>
+        g.id === id ? { ...g, status: 'complete', result: imageUrl, metadata: job.result?.metadata } : g
+      ));
+      return imageUrl;
     } catch (err) {
-      setGenerations(prev => prev.map(g => g.id === id ? { ...g, status: 'error', error: err.message } : g));
+      setGenerations(prev => prev.map(g =>
+        g.id === id ? { ...g, status: 'error', error: err.message } : g
+      ));
+      return null;
     } finally { setIsGenerating(false); }
   }, [currentPrompt, selectedModel, selectedBackend, generationSettings, isGenerating]);
 
   const handleVideoGenerate = useCallback(async (options) => {
-    if (isGenerating) return;
+    if (isGenerating) return null;
     setIsGenerating(true);
     const id = Date.now().toString();
-    setGenerations(prev => [{ id, prompt: options.prompt, status: 'processing', type: 'video', backend: options.backend, timestamp: new Date().toISOString() }, ...prev]);
+    setGenerations(prev => [{
+      id, prompt: options.prompt, status: 'processing',
+      type: 'video', backend: options.backend,
+      timestamp: new Date().toISOString()
+    }, ...prev]);
     try {
-      const r = await fetch(`${API_BASE_URL}/api/generate-video`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(options) });
-      if (r.ok) {
-        const data = await r.json();
-        setGenerations(prev => prev.map(g => g.id === id ? { ...g, status: 'complete', result: data.video, metadata: data.metadata } : g));
-      } else throw new Error('Video generation failed');
+      const job = await argon.generateVideo(options, { wait: true });
+      const videoUrl = job.result?.video || job.result?.output || null;
+      setGenerations(prev => prev.map(g =>
+        g.id === id ? { ...g, status: 'complete', result: videoUrl, metadata: job.result?.metadata } : g
+      ));
+      return videoUrl;
     } catch (err) {
-      setGenerations(prev => prev.map(g => g.id === id ? { ...g, status: 'error', error: err.message } : g));
+      setGenerations(prev => prev.map(g =>
+        g.id === id ? { ...g, status: 'error', error: err.message } : g
+      ));
+      return null;
     } finally { setIsGenerating(false); }
   }, [isGenerating]);
 
@@ -91,7 +109,6 @@ function App() {
         <Header mode={mode} onModeChange={setMode} systemStatus={systemStatus} />
 
         <div className="encom-main-layout">
-          {/* Sidebar hidden in pipeline mode */}
           {!isPipeline && (
             <Sidebar
               collapsed={sidebarCollapsed}
