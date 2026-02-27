@@ -80,11 +80,10 @@ comfy_image = (
         "/opt/ComfyUI/custom_nodes/ComfyUI-LivePortraitKJ",
         "cd /opt/ComfyUI/custom_nodes/ComfyUI-LivePortraitKJ && pip install -r requirements.txt",
     )
-    # BiRefNet — segmentation
+    # BiRefNet — segmentation (node manages its own model downloads)
     .run_commands(
         "git clone --depth=1 https://github.com/ZHO-ZHO-ZHO/ComfyUI-BiRefNet-ZHO "
         "/opt/ComfyUI/custom_nodes/ComfyUI-BiRefNet-ZHO",
-        "pip install birefnet",
     )
     # Bundle our helper modules into the image
     .add_local_python_source("comfy_workflows")
