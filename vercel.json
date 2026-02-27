@@ -5,7 +5,7 @@
   "outputDirectory": "build",
   "framework": "create-react-app",
   "env": {
-    "REACT_APP_API_URL": "https://secretmenu-deadweight-poc.hf.space"
+    "REACT_APP_API_URL": ""
   },
   "headers": [
     {
@@ -25,7 +25,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://secretmenu-deadweight-poc.hf.space/api/:path*"
+      "destination": "https://REPLACE_WITH_MODAL_URL_AFTER_DEPLOY/api/:path*"
     }
   ]
 }
