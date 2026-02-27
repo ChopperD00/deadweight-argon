@@ -4,28 +4,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "create-react-app",
-  "env": {
-    "REACT_APP_API_URL": ""
-  },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "ALLOWALL"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
-    }
-  ],
+  "env": { "REACT_APP_API_URL": "" },
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://REPLACE_WITH_MODAL_URL_AFTER_DEPLOY/api/:path*"
+      "destination": "https://phil-94748--deadweight-argon-argon-api.modal.run/api/:path*"
     }
   ]
 }
