@@ -7,6 +7,7 @@ import StatusBar from './components/StatusBar';
 import Header from './components/Header';
 import GenerationQueue from './components/GenerationQueue';
 import PasswordGate from './components/PasswordGate';
+import EncomEngine from './components/EncomEngine';
 
 // DEADWEIGHT API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:7860';
@@ -154,9 +155,11 @@ function App() {
 
   return (
     <PasswordGate>
+      {/* Canvas atmospheric engine — fixed behind all UI, pointer-events: none */}
+      <EncomEngine opacity={0.65} />
+
       <div className="encom-app">
-        {/* Background Effects */}
-        <div className="encom-grid-bg" />
+        {/* CSS accent overlays (scanlines, HUD corners) */}
         <div className="encom-scanlines" />
 
         {/* HUD Corners */}
@@ -257,6 +260,7 @@ function App() {
             flex-direction: column;
             position: relative;
             overflow: hidden;
+            z-index: 1;
           }
 
           .encom-main-layout {
