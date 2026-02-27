@@ -1,0 +1,62 @@
+{
+  "_comment": "Pose-conditioned ControlNet generation. Set pose image from DWPose output. Requires control_v11p_sd15_openpose.pth in /models/controlnet/.",
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": { "ckpt_name": "sd_xl_base_1.0.safetensors" }
+  },
+  "2": {
+    "class_type": "ControlNetLoader",
+    "inputs": { "control_net_name": "control_v11p_sd15_openpose.pth" }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "pose_skeleton.png" }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "portrait of a person, highly detailed", "clip": ["1", 1] }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "nsfw, blurry, low quality, watermark", "clip": ["1", 1] }
+  },
+  "6": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": ["4", 0],
+      "negative": ["5", 0],
+      "control_net": ["2", 0],
+      "image": ["3", 0],
+      "strength": 0.9,
+      "start_percent": 0.0,
+      "end_percent": 1.0
+    }
+  },
+  "7": {
+    "class_type": "EmptyLatentImage",
+    "inputs": { "width": 512, "height": 768, "batch_size": 1 }
+  },
+  "8": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["1", 0],
+      "positive": ["6", 0],
+      "negative": ["6", 1],
+      "latent_image": ["7", 0],
+      "seed": 42,
+      "steps": 30,
+      "cfg": 7.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0
+    }
+  },
+  "9": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["8", 0], "vae": ["1", 2] }
+  },
+  "10": {
+    "class_type": "PreviewImage",
+    "inputs": { "images": ["9", 0] }
+  }
+}

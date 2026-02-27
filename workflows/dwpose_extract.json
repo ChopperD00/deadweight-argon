@@ -1,0 +1,21 @@
+{
+  "_comment": "DWPose extraction workflow. Load via ComfyUI > Load > Load workflow.",
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "example.png" }
+  },
+  "2": {
+    "class_type": "DWPreprocessor",
+    "inputs": {
+      "image": ["1", 0],
+      "detect_hand": "enable",
+      "detect_body": "enable",
+      "detect_face": "enable",
+      "resolution": 512
+    }
+  },
+  "3": {
+    "class_type": "PreviewImage",
+    "inputs": { "images": ["2", 0] }
+  }
+}

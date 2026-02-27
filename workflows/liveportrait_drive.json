@@ -1,0 +1,41 @@
+{
+  "_comment": "LivePortrait self-reenactment expression drive. Requires ComfyUI-LivePortraitKJ custom node. Set driving_multiplier 0.1-3.0.",
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "source.png" }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "driving.png" }
+  },
+  "3": {
+    "class_type": "LivePortraitLoadModels",
+    "inputs": { "precision": "fp16", "pipeline": "human" }
+  },
+  "4": {
+    "class_type": "LivePortraitCropping",
+    "inputs": {
+      "src_image": ["1", 0],
+      "dri_video": ["2", 0],
+      "get_mask": false,
+      "driving_smooth": 0.0,
+      "models": ["3", 0]
+    }
+  },
+  "5": {
+    "class_type": "LivePortraitProcess",
+    "inputs": {
+      "src_image": ["1", 0],
+      "dri_motion": ["4", 0],
+      "models": ["3", 0],
+      "relative_motion": true,
+      "do_crop": true,
+      "pasteback": true,
+      "driving_multiplier": 1.0
+    }
+  },
+  "6": {
+    "class_type": "PreviewImage",
+    "inputs": { "images": ["5", 0] }
+  }
+}

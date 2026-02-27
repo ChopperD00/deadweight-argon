@@ -1,0 +1,15 @@
+{
+  "_comment": "BiRefNet segmentation workflow. Requires ComfyUI-BiRefNet-ZHO custom node.",
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "example.png" }
+  },
+  "2": {
+    "class_type": "BiRefNetUltra",
+    "inputs": { "images": ["1", 0] }
+  },
+  "3": {
+    "class_type": "PreviewImage",
+    "inputs": { "images": ["2", 0] }
+  }
+}
