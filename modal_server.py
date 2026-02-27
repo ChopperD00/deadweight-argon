@@ -12,6 +12,10 @@ Stack:
   - GPU: L4 (fast cold start, great for inference) or A10G for heavy loads
   - Volume: /models — persists checkpoints, LoRAs, embeddings across runs
 
+Helper modules (bundled into image via add_local_python_source):
+  - comfy_workflows.py — workflow templates + _sub()
+  - comfy_helpers.py   — run_comfy_workflow, ARKit mapping, pose templates, etc.
+
 Deploy:
   pip install modal
   modal setup          # authenticate once
@@ -28,14 +32,12 @@ import json
 import os
 import uuid
 import time
-import asyncio
 from pathlib import Path
 
 # ── Modal App ────────────────────────────────────────────────────────────────
 app = modal.App("deadweight-argon")
 
 # ── Persistent Volume (checkpoints, LoRAs, embeddings) ───────────────────────
-# This volume persists between runs — models download once, cache forever.
 volume = modal.Volume.from_name("argon-models", create_if_missing=True)
 
 MODELS_DIR    = Path("/models")
@@ -45,7 +47,6 @@ COMFY_DIR     = Path("/opt/ComfyUI")
 COMFY_MODELS  = COMFY_DIR / "models"
 
 # ── ComfyUI Image ─────────────────────────────────────────────────────────────
-# Builds once, cached by Modal's image layer system.
 comfy_image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install(
@@ -60,7 +61,7 @@ comfy_image = (
         "fastapi[standard]", "uvicorn", "httpx", "requests",
         "Pillow", "numpy", "opencv-python-headless",
         "safetensors", "einops", "transformers", "accelerate",
-        "onnxruntime-gpu", "insightface",
+        "onnxruntime-gpu", "insightface", "mediapipe",
     )
     # ComfyUI core
     .run_commands(
@@ -85,8 +86,9 @@ comfy_image = (
         "/opt/ComfyUI/custom_nodes/ComfyUI-BiRefNet-ZHO",
         "pip install birefnet",
     )
-    # MediaPipe
-    .pip_install("mediapipe")
+    # Bundle our helper modules into the image
+    .add_local_python_source("comfy_workflows")
+    .add_local_python_source("comfy_helpers")
 )
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
@@ -115,21 +117,24 @@ class ArgonRuntime:
         import sys
         sys.path.insert(0, str(COMFY_DIR))
 
+        # Symlink volume model dirs into ComfyUI's model folder
         for subdir in ["checkpoints", "loras", "controlnet", "clip_vision", "vae"]:
             src = MODELS_DIR / subdir
             dst = COMFY_MODELS / subdir
             src.mkdir(parents=True, exist_ok=True)
             dst.mkdir(parents=True, exist_ok=True)
+            # Symlink volume subdirs into ComfyUI model tree
+            link = COMFY_MODELS / subdir
+            if not link.is_symlink() and link.exists():
+                link.rename(link.with_suffix(".bak"))
+            if not link.is_symlink():
+                link.symlink_to(src)
 
-        try:
-            import comfy.model_management as model_management
-            import nodes
-            self.comfy_available = True
-            print("[argon] ComfyUI initialized")
-        except Exception as e:
-            print(f"[argon] ComfyUI init failed: {e} — mock mode")
-            self.comfy_available = False
+        # Start ComfyUI as a background subprocess, wait for readiness
+        from comfy_helpers import start_comfyui
+        self.comfy_available = start_comfyui(str(COMFY_DIR), port=8188, timeout=120)
 
+        # MediaPipe face mesh
         try:
             import mediapipe as mp
             self.mp_face_mesh = mp.solutions.face_mesh.FaceMesh(
@@ -148,17 +153,17 @@ class ArgonRuntime:
 
     @modal.method()
     def download_civitai_lora(self, version_id: str) -> dict:
-        """
-        Download a LoRA from CivitAI by model version ID or URL.
-        Caches to /models/loras/ on Modal Volume — downloads once.
-        """
+        """Download a LoRA from CivitAI by model version ID. Cached to volume."""
         import requests, re
 
         LORA_DIR.mkdir(parents=True, exist_ok=True)
         api_key = os.environ.get("CIVITAI_API_KEY", "")
 
         if "civitai.com" in version_id:
-            match = re.search(r"modelVersionId=(\d+)|/models/\d+\?.*modelVersionId=(\d+)|versions/(\d+)", version_id)
+            match = re.search(
+                r"modelVersionId=(\d+)|/models/\d+\?.*modelVersionId=(\d+)|versions/(\d+)",
+                version_id,
+            )
             if match:
                 version_id = match.group(1) or match.group(2) or match.group(3)
 
@@ -170,7 +175,7 @@ class ArgonRuntime:
         headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
         meta = requests.get(
             f"https://civitai.com/api/v1/model-versions/{version_id}",
-            headers=headers, timeout=30
+            headers=headers, timeout=30,
         ).json()
 
         name      = meta.get("model", {}).get("name", f"lora_{version_id}")
@@ -224,7 +229,7 @@ class ArgonRuntime:
 
         landmarks  = self._extract_face_landmarks(img)
         expression = self._landmarks_to_expression(landmarks)
-        pose       = self._extract_pose_comfy(img) if self.comfy_available else self._mock_pose()
+        pose       = self._extract_pose_comfy(img)
 
         track_id = str(uuid.uuid4())
         frame = {
@@ -274,8 +279,7 @@ class ArgonRuntime:
 
     @modal.method()
     def analyze_segment(self, source_b64: str, region: str = "face") -> dict:
-        import base64, io
-        import numpy as np
+        import base64, io, numpy as np
         from PIL import Image
         try:
             if source_b64.startswith("data:"):
@@ -284,17 +288,12 @@ class ArgonRuntime:
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
-        if self.comfy_available:
-            mask = self._segment_birefnet(img, region)
-        else:
-            arr = np.array(img.convert("L"))
-            mask_img = Image.fromarray((arr > 128).astype(np.uint8) * 255)
-            buf = io.BytesIO()
-            mask_img.save(buf, format="PNG")
-            mask = base64.b64encode(buf.getvalue()).decode()
-
-        return {"region": region, "maskBase64": mask,
-                "model": "birefnet" if self.comfy_available else "threshold_fallback"}
+        from comfy_helpers import segment_birefnet
+        mask = segment_birefnet(img, region) if self.comfy_available else self._threshold_mask(img)
+        return {
+            "region": region, "maskBase64": mask,
+            "model": "birefnet" if self.comfy_available else "threshold_fallback",
+        }
 
     # ── Transfer ──────────────────────────────────────────────────────────────
 
@@ -311,16 +310,17 @@ class ArgonRuntime:
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
+        from comfy_helpers import liveportrait_drive
         if self.comfy_available:
-            result_b64 = self._liveportrait_drive(img, coefficients, strength)
+            result_b64 = liveportrait_drive(img, coefficients, strength)
+            model = "liveportrait"
         else:
             buf = io.BytesIO()
             img.save(buf, format="PNG")
             result_b64 = base64.b64encode(buf.getvalue()).decode()
+            model = "passthrough_mock"
 
-        return {"outputBase64": result_b64,
-                "model": "liveportrait" if self.comfy_available else "passthrough_mock",
-                "strength": strength}
+        return {"outputBase64": result_b64, "model": model, "strength": strength}
 
     @modal.method()
     def transfer_sequence(
@@ -336,6 +336,18 @@ class ArgonRuntime:
         if not frames:
             return {"ok": False, "error": "Empty motion track"}
 
+        from comfy_helpers import liveportrait_drive
+        import base64, io
+        from PIL import Image
+
+        try:
+            raw = character_image_b64
+            if raw.startswith("data:"):
+                raw = raw.split(",", 1)[1]
+            base_img = Image.open(io.BytesIO(base64.b64decode(raw))).convert("RGB")
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
         output_frames = []
         for i, frame in enumerate(frames):
             expression = frame.get("expression", {})
@@ -344,10 +356,9 @@ class ArgonRuntime:
                 expression  = self._scale_expression(expression, beat_factor)
 
             if self.comfy_available:
-                img_b64 = self._comfyui_frame(
-                    character_image_b64, frame.get("pose"),
-                    expression, style=style, lora_paths=lora_paths or []
-                )
+                coefficients = expression.get("blendshapes", expression)
+                strength     = expression.get("intensity", 1.0)
+                img_b64      = liveportrait_drive(base_img, coefficients, strength)
             else:
                 img_b64 = character_image_b64
 
@@ -373,9 +384,10 @@ class ArgonRuntime:
     ) -> dict:
         if not self.comfy_available:
             return {"ok": True, "outputBase64": None, "mock": True, "model": model}
-        result_b64 = self._comfyui_generate_image(
+        from comfy_helpers import generate_image_comfy
+        result_b64 = generate_image_comfy(
             prompt, model, reference_image_b64, width, height,
-            pose_conditioning, lora_paths or []
+            pose_conditioning, lora_paths or [],
         )
         return {"ok": True, "outputBase64": result_b64, "mock": False, "model": model}
 
@@ -386,7 +398,8 @@ class ArgonRuntime:
     ) -> dict:
         if not self.comfy_available:
             return {"ok": True, "outputBase64": None, "mock": True}
-        result_b64 = self._comfyui_generate_pose(prompt, pose, reference_image_b64, lora_paths or [])
+        from comfy_helpers import generate_pose_comfy
+        result_b64 = generate_pose_comfy(prompt, pose, reference_image_b64, lora_paths or [])
         return {"ok": True, "outputBase64": result_b64, "mock": False}
 
     # ── Internal Helpers ──────────────────────────────────────────────────────
@@ -401,8 +414,28 @@ class ArgonRuntime:
             return None
         raw       = results.multi_face_landmarks[0].landmark
         landmarks = [{"index": i, "x": lm.x, "y": lm.y, "z": lm.z} for i, lm in enumerate(raw)]
-        return {"landmarks": landmarks, "blendshapes": self._landmarks_to_arkit(raw),
-                "confidence": 0.92, "identityHash": None}
+        from comfy_helpers import landmarks_to_arkit
+        return {
+            "landmarks":   landmarks,
+            "blendshapes": landmarks_to_arkit(raw),
+            "confidence":  0.92,
+            "identityHash": None,
+        }
+
+    def _extract_pose_comfy(self, img) -> dict:
+        if not self.comfy_available:
+            return self._mock_pose()
+        from comfy_helpers import extract_pose_comfy
+        return extract_pose_comfy(img)
+
+    def _threshold_mask(self, img) -> str:
+        import numpy as np, io, base64
+        from PIL import Image
+        arr     = np.array(img.convert("L"))
+        mask    = Image.fromarray((arr > 128).astype("uint8") * 255)
+        buf     = io.BytesIO()
+        mask.save(buf, format="PNG")
+        return base64.b64encode(buf.getvalue()).decode()
 
     def _landmarks_to_expression(self, landmarks: dict | None) -> dict:
         if not landmarks:
@@ -425,48 +458,12 @@ class ArgonRuntime:
             "noseFlair":       (bs.get("noseSneerLeft", 0) + bs.get("noseSneerRight", 0)) / 2,
             "noseWrinkle":     0.0,
             "emotionVector":   {"valence": 0.3, "arousal": jaw, "dominance": 0.6},
-            "emotionClass":    {"neutral": 1.0, "happy": 0, "sad": 0, "angry": 0,
-                                "surprised": 0, "fearful": 0, "disgusted": 0, "contempt": 0},
-            "intensity":       min(jaw * 2, 1.0),
+            "emotionClass":    {
+                "neutral": 1.0, "happy": 0, "sad": 0, "angry": 0,
+                "surprised": 0, "fearful": 0, "disgusted": 0, "contempt": 0,
+            },
+            "intensity": min(jaw * 2, 1.0),
         }
-
-    def _landmarks_to_arkit(self, raw_landmarks) -> dict:
-        return {k: 0.0 for k in [
-            "eyeBlinkLeft", "eyeBlinkRight", "jawOpen",
-            "mouthSmileLeft", "mouthSmileRight",
-            "mouthFrownLeft", "mouthFrownRight",
-            "browInnerUp", "browOuterUpLeft", "browOuterUpRight",
-            "browDownLeft", "browDownRight",
-            "eyeWideLeft", "eyeWideRight",
-            "eyeSquintLeft", "eyeSquintRight",
-            "cheekSquintLeft", "cheekSquintRight",
-            "noseSneerLeft", "noseSneerRight",
-            "mouthPucker", "mouthStretchLeft", "mouthStretchRight",
-            "mouthDimpleLeft", "mouthDimpleRight",
-            "cheekPuff", "tongueOut",
-        ]}
-
-    def _extract_pose_comfy(self, img) -> dict:
-        return self._mock_pose()
-
-    def _segment_birefnet(self, img, region: str) -> str:
-        return ""  # stub — ComfyUI workflow
-
-    def _liveportrait_drive(self, img, coefficients: dict, strength: float) -> str:
-        import io, base64
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        return base64.b64encode(buf.getvalue()).decode()  # stub
-
-    def _comfyui_frame(self, img_b64, pose, expression, style, lora_paths) -> str:
-        return img_b64  # stub
-
-    def _comfyui_generate_image(self, prompt, model, reference_b64,
-                                 width, height, pose_conditioning, lora_paths) -> str:
-        return ""  # stub
-
-    def _comfyui_generate_pose(self, prompt, pose, reference_b64, lora_paths) -> str:
-        return ""  # stub
 
     def _beat_proximity(self, time_ms: float, beat_curve: list) -> float:
         if not beat_curve:
@@ -532,6 +529,7 @@ class ArgonRuntime:
                 "leftHip":       {"x": 0.42, "y": 0.56, "conf": 0.88},
                 "rightHip":      {"x": 0.58, "y": 0.56, "conf": 0.88},
             },
+            "poseImageB64": None,
             "confidence": 0.92,
         }
 
@@ -572,7 +570,7 @@ class ArgonRuntime:
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-web_app = FastAPI(title="Argon Modal API", version="0.1.0")
+web_app = FastAPI(title="Argon Modal API", version="0.2.0")
 web_app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
@@ -586,7 +584,7 @@ def gen_id() -> str:
 
 @web_app.get("/api/health")
 async def health():
-    return {"ok": True, "version": "0.1.0", "backend": "modal", "status": "ok"}
+    return {"ok": True, "version": "0.2.0", "backend": "modal", "status": "ok"}
 
 
 @web_app.get("/api/jobs/{job_id}")
