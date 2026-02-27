@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import argon from '../../lib/argon-client';
 
 const ART_STYLES = ['ENCOM GRID','NOIR SKETCH','ANIME CEL','OIL PAINT','GLITCH ART','WATERCOLOR','PIXEL ART','BRUTALIST'];
@@ -22,7 +21,7 @@ function detectBeats(buffer, threshold = 0.15, minGap = 0.28) {
   return beats;
 }
 
-export default function VideoEditor({ generations }) {
+export default function VideoEditor() {
   const [audioFile, setAudioFile]   = useState(null);
   const [audioBuf, setAudioBuf]     = useState(null);
   const [beats, setBeats]           = useState([]);
