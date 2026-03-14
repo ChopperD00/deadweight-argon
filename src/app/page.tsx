@@ -81,11 +81,32 @@ export default function ArgonPage() {
   const [endFrame, setEndFrame] = useState<string | null>(null);
   const [styleRef, setStyleRef] = useState<string | null>(null);
 
+  // Load persisted jobs from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('argon-jobs');
+      if (saved) setJobs(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  // Persist jobs to localStorage
+  useEffect(() => {
+    if (jobs.length) {
+      try { localStorage.setItem('argon-jobs', JSON.stringify(jobs.slice(0, 50))); } catch {}
+    }
+  }, [jobs]);
+
   // Load tools on mount
   useEffect(() => {
     fetch(`${API}/tools`).then(r => r.json()).then(setTools).catch(() => {});
     fetch(`${API}/jobs`).then(r => r.json()).then(d => {
-      if (d.jobs) setJobs(d.jobs);
+      if (d.jobs?.length) {
+        setJobs(prev => {
+          const ids = new Set(prev.map(j => j.id || j.job_id));
+          const newOnes = d.jobs.filter((j: Job) => !ids.has(j.id || j.job_id));
+          return [...newOnes, ...prev];
+        });
+      }
     }).catch(() => {});
   }, []);
 
