@@ -34,6 +34,39 @@ const PROVIDERS = {
 
 const ASPECTS = ['16:9', '9:16', '1:1'] as const;
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res((r.result as string).split(',')[1]);
+    r.onerror = () => rej(new Error('Read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+function UploadZone({ label, value, onUpload, onClear }: {
+  label: string; value: string | null;
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void; onClear: () => void;
+}) {
+  return (
+    <div className="relative group">
+      <label className="block font-mono text-[10px] tracking-[0.2em] text-white/25 mb-2">{label}</label>
+      {value ? (
+        <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-accent/30 bg-black">
+          <img src={`data:image/jpeg;base64,${value}`} alt="" className="w-full h-full object-contain" />
+          <button onClick={onClear}
+            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 border border-white/10 text-white/40 hover:text-white text-xs flex items-center justify-center">✕</button>
+        </div>
+      ) : (
+        <label className="flex flex-col items-center justify-center w-full h-24 rounded-lg border border-dashed border-white/[0.08] hover:border-white/[0.15] bg-surface-2 cursor-pointer transition-all group-hover:bg-surface-3">
+          <div className="text-white/10 text-xl mb-1">↑</div>
+          <div className="font-mono text-[9px] text-white/15">Drop image or click</div>
+          <input type="file" accept="image/*,video/*" className="hidden" onChange={onUpload} />
+        </label>
+      )}
+    </div>
+  );
+}
+
 export default function ArgonPage() {
   const [tab, setTab] = useState<Tab>('video');
   const [prompt, setPrompt] = useState('');
@@ -44,6 +77,9 @@ export default function ArgonPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [tools, setTools] = useState<any>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const [startFrame, setStartFrame] = useState<string | null>(null);
+  const [endFrame, setEndFrame] = useState<string | null>(null);
+  const [styleRef, setStyleRef] = useState<string | null>(null);
 
   // Load tools on mount
   useEffect(() => {
@@ -87,13 +123,20 @@ export default function ArgonPage() {
   }, [jobs]);
 
   const generate = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim() && !startFrame) return;
     setLoading(true);
     try {
       if (provider.endpoint === 'krea') {
         const body: any = { prompt: prompt.trim(), aspectRatio: aspect };
-        if (tab === 'video') body.duration = duration;
-        if (tab === 'image') { body.width = 1024; body.height = 1024; }
+        if (tab === 'video') {
+          body.duration = duration;
+          if (startFrame) body.startImage = `data:image/jpeg;base64,${startFrame}`;
+          if (endFrame) body.endImage = `data:image/jpeg;base64,${endFrame}`;
+        }
+        if (tab === 'image') {
+          body.width = 1024; body.height = 1024;
+          if (styleRef) body.styleImages = [{ url: `data:image/jpeg;base64,${styleRef}`, strength: 0.8 }];
+        }
         const r = await fetch(`${KREA_API}${provider.path}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${KREA_KEY}` },
@@ -107,7 +150,8 @@ export default function ArgonPage() {
         const endpoint = tab === 'video' ? '/generate/video' : tab === 'image' ? '/generate/image' : '/generate/audio';
         const body: any = tab === 'audio'
           ? { text: prompt.trim() }
-          : { prompt: prompt.trim(), provider: provider.id === 'replicate' ? undefined : provider.id, aspectRatio: aspect };
+          : { prompt: prompt.trim(), provider: provider.id === 'replicate' ? undefined : provider.id, aspectRatio: aspect,
+            ...(startFrame && { referenceImage: `data:image/jpeg;base64,${startFrame}` }) };
         if (tab === 'video') body.duration = duration;
         const r = await fetch(`${API}${endpoint}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -216,6 +260,41 @@ export default function ArgonPage() {
               </div>
             </div>
 
+
+            {/* Reference uploads */}
+            {tab !== 'audio' && (
+              <div className="bg-surface-1 border border-white/[0.06] rounded-xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="font-mono text-[10px] tracking-[0.2em] text-white/25">
+                    {tab === 'video' ? 'KEYFRAMES' : 'STYLE REFERENCE'}
+                  </label>
+                  <span className="font-mono text-[9px] text-white/10">optional</span>
+                </div>
+                {tab === 'video' ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <UploadZone label="START FRAME" value={startFrame}
+                      onUpload={async (e) => { const f = e.target.files?.[0]; if (f) setStartFrame(await fileToBase64(f)); }}
+                      onClear={() => setStartFrame(null)} />
+                    <UploadZone label="END FRAME" value={endFrame}
+                      onUpload={async (e) => { const f = e.target.files?.[0]; if (f) setEndFrame(await fileToBase64(f)); }}
+                      onClear={() => setEndFrame(null)} />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3">
+                    <UploadZone label="REFERENCE" value={styleRef}
+                      onUpload={async (e) => { const f = e.target.files?.[0]; if (f) setStyleRef(await fileToBase64(f)); }}
+                      onClear={() => setStyleRef(null)} />
+                    <div className="col-span-2 flex items-center justify-center rounded-lg border border-dashed border-white/[0.04] bg-surface-2/50">
+                      <div className="text-center p-4">
+                        <div className="font-mono text-[9px] text-white/10 tracking-wider">INSPIRATION BOARD</div>
+                        <div className="text-[10px] text-white/[0.06] mt-1">Multi-ref coming soon</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Params row */}
             {tab !== 'audio' && (
               <div className="flex gap-3">
@@ -243,7 +322,7 @@ export default function ArgonPage() {
             )}
 
             {/* Generate button */}
-            <button onClick={generate} disabled={loading || !prompt.trim()}
+            <button onClick={generate} disabled={loading || (!prompt.trim() && !startFrame)}
               className={`w-full py-3.5 rounded-xl font-mono text-xs tracking-[0.15em] uppercase transition-all ${
                 loading ? 'bg-accent/20 text-accent/60 cursor-wait shimmer'
                 : !prompt.trim() ? 'bg-surface-2 text-white/15 cursor-not-allowed'
