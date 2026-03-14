@@ -3,13 +3,14 @@ import dynamic from 'next/dynamic';
 const WorkflowEditor = dynamic(() => import('../components/WorkflowEditor'), { ssr: false,
   loading: () => <div className="h-[600px] bg-surface-1 rounded-xl flex items-center justify-center font-mono text-[10px] text-white/15">Loading workflow editor...</div>
 });
+import SettingsPanel from '../components/SettingsPanel';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API = 'https://BUILT BY RENZO · ryujin.inferis.app/api/argon';
 const KREA_API = 'https://api.krea.ai';
 const KREA_KEY = '66eb338a-e1a9-4a69-bc3c-63ee9de86df2:4y-UB7mcv7c1iJTfkrjxHyz-NyJrQgu-';
 
-type Tab = 'video' | 'image' | 'audio' | 'workflows' | 'guide';
+type Tab = 'video' | 'image' | 'audio' | 'workflows' | 'guide' | 'settings';
 type Job = {
   id: string; tool: string; status: string; input: any;
   output?: any; error?: string; createdAt: string; completedAt?: string;
@@ -317,12 +318,12 @@ export default function ArgonPage() {
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-8">
         {/* Tab bar */}
         <div className="flex gap-1 mb-8 p-1 bg-surface-1 rounded-lg w-fit">
-          {(['video', 'image', 'audio', 'workflows', 'guide'] as Tab[]).map(t => (
+          {(['video', 'image', 'audio', 'workflows', 'guide', 'settings'] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-5 py-2 rounded-md font-mono text-xs tracking-[0.12em] uppercase transition-all ${
                 tab === t ? 'bg-surface-3 text-white shadow-sm' : 'text-white/30 hover:text-white/50'
               }`}>
-              {t === 'video' ? '◆ Video' : t === 'image' ? '◇ Image' : t === 'audio' ? '♫ Audio' : t === 'workflows' ? '⬡ Workflows' : '? Guide'}
+              {t === 'video' ? '◆ Video' : t === 'image' ? '◇ Image' : t === 'audio' ? '♫ Audio' : t === 'workflows' ? '⬡ Workflows' : t === 'guide' ? '? Guide' : '⚙ Settings'}
             </button>
           ))}
         </div>
@@ -510,6 +511,7 @@ export default function ArgonPage() {
 
         {tab === 'guide' && <GuidePanel />}
         {tab === 'workflows' && <WorkflowsPanel />}
+        {tab === 'settings' && <SettingsPanel />}
       </main>
 
       {/* Footer */}
