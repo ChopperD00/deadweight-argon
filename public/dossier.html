@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INFERIS · AGENT DOSSIER</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08080a;--s1:#0e0e11;--s2:#141418;--s3:#1a1a1f;--b:rgba(255,255,255,.06);--bh:rgba(255,255,255,.12);--t:#e8e6e1;--tm:rgba(232,230,225,.55);--td:rgba(232,230,225,.3);--tx:rgba(232,230,225,.15);--a:#7c6af7;--ad:rgba(124,106,247,.15);--g:#4ade80;--gd:rgba(74,222,128,.12);--am:#f59e0b;--amd:rgba(245,158,11,.12);--r:#ef4444;--rd:rgba(239,68,68,.12);--bl:#3b82f6;--bld:rgba(59,130,246,.12);--cy:#22d3ee;--cyd:rgba(34,211,238,.1);--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bh);border-radius:2px}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+.hdr{padding:48px 0 32px;border-bottom:1px solid var(--b);margin-bottom:48px}
+.hdr-brand{font-family:var(--mono);font-size:9px;letter-spacing:.35em;color:var(--a)}
+.hdr-title{font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:.04em;line-height:1.2}
+.hdr-title span{color:var(--a)}
+.hdr-sub{font-size:13px;color:var(--tm);margin-top:8px;max-width:500px}
+.sec{margin-bottom:48px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--b)}
+.sec-num{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.15em;color:var(--bg);padding:3px 10px;border-radius:3px}
+.sec-title{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.12em}
+.card{background:var(--s1);border:1px solid var(--b);border-radius:8px;padding:16px 20px;margin-bottom:8px;transition:border-color .15s}
+.card:hover{border-color:var(--bh)}
+.tag{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.12em;padding:3px 8px;border-radius:3px;display:inline-block}
+.mesh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--b);border-radius:8px;overflow:hidden;margin-bottom:24px}
+.mesh-node{background:var(--s1);padding:16px 20px}
+.mesh-name{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.1em;margin-bottom:4px}
+.mesh-ip{font-family:var(--mono);font-size:10px;color:var(--tx);margin-bottom:8px}
+.mesh-status{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.12em}
+.mesh-specs{font-size:11px;color:var(--td);margin-top:8px;line-height:1.6}
+.agent-grid{display:grid;grid-template-columns:1fr;gap:6px}
+.agent{display:grid;grid-template-columns:100px 140px 1fr auto;gap:12px;align-items:start;background:var(--s1);border:1px solid var(--b);border-radius:6px;padding:12px 16px;transition:border-color .15s}
+.agent:hover{border-color:var(--bh)}
+.agent-name{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em}
+.agent-role{font-size:12px;color:var(--tm)}
+.agent-caps{font-size:11px;color:var(--td);line-height:1.5}
+.agent-team{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.12em;padding:2px 6px;border-radius:3px;white-space:nowrap;height:fit-content}
+.t-parallax{background:var(--cyd);color:var(--cy)}
+.t-kiln{background:var(--amd);color:var(--am)}
+.t-core{background:var(--ad);color:var(--a)}
+.t-resonance{background:var(--gd);color:var(--g)}
+.t-dispatch{background:var(--bld);color:var(--bl)}
+.t-console{background:var(--rd);color:var(--r)}
+.t-argon{background:rgba(255,255,255,.04);color:var(--td)}
+.model-row{display:grid;grid-template-columns:120px 1fr 100px 100px;gap:12px;align-items:center;background:var(--s1);padding:12px 16px;border-bottom:1px solid var(--b)}
+.model-row:last-child{border-bottom:none}
+.persona-card{background:var(--s1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:12px}
+.persona-name{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.1em;margin-bottom:8px}
+.persona-desc{font-size:13px;color:var(--tm);line-height:1.7;margin-bottom:12px}
+.persona-traits{display:flex;flex-wrap:wrap;gap:6px}
+.trait{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:3px 8px;border-radius:3px;background:var(--s2);color:var(--td);border:1px solid var(--b)}
+.footer{padding:32px 0;border-top:1px solid var(--b);margin-top:48px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--tx);letter-spacing:.1em}
+@media(max-width:768px){.mesh-grid{grid-template-columns:1fr}.agent{grid-template-columns:1fr}.model-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-brand">SECRET MENU · INFERIS · RENZO</div>
+  <div class="hdr-title">AGENT <span>DOSSIER</span></div>
+  <div class="hdr-sub">Complete guide to the Inferis multi-agent mesh — topology, agents, models, capabilities, and usage. For the team, by Renzo.</div>
+</div>
+
+<!-- MESH TOPOLOGY -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--g)">01</div>
+    <div class="sec-title">MESH TOPOLOGY</div>
+  </div>
+  <div class="mesh-grid">
+    <div class="mesh-node">
+      <div class="mesh-name" style="color:var(--g)">ACIDBURN</div>
+      <div class="mesh-ip">100.106.251.110 · :3141-3143</div>
+      <div class="mesh-status" style="color:var(--g)">● ONLINE — PRIMARY</div>
+      <div class="mesh-specs">
+        Ubuntu · AMD 6700XT (→ 3090 incoming)<br>
+        64GB RAM · Primary inference node<br>
+        inferis-core :3142 · 56 agents<br>
+        inferis-console :3141 (ryujin.inferis.app)<br>
+        inferis-gui :3143 (chimera.inferis.app)<br>
+        Relay v1.1.1 :3057<br>
+        Ollama · Mistral Small 3 (local brain)<br>
+        Claude Code home: ~/arg0n-dev
+      </div>
+    </div>
+    <div class="mesh-node">
+      <div class="mesh-name" style="color:var(--am)">HERBIE</div>
+      <div class="mesh-ip">100.107.10.49 · ssh herbie@</div>
+      <div class="mesh-status" style="color:var(--am)">○ PENDING</div>
+      <div class="mesh-specs">
+        Mac Mini · Apple Silicon M1<br>
+        16GB Unified Memory · MLX inference<br>
+        Fast lane: Mistral Nemo (12B)<br>
+        Qdrant + Mem0 + Ollama<br>
+        Lightweight agent tasks
+      </div>
+    </div>
+    <div class="mesh-node">
+      <div class="mesh-name" style="color:var(--cy)">UNICRON</div>
+      <div class="mesh-ip">100.70.194.81 · Phil's machine</div>
+      <div class="mesh-status" style="color:var(--cy)">● ONLINE — COMMAND</div>
+      <div class="mesh-specs">
+        Mac · Apple M4 · macOS 15.7<br>
+        16GB RAM · 1.8TB SSD<br>
+        Node v25 · Python 3.14<br>
+        Desktop Commander · Claude in Chrome<br>
+        MCP Hub (Figma, Notion, Vercel, GitHub...)<br>
+        Phil's primary workstation
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RENZO -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--a)">02</div>
+    <div class="sec-title">RENZO — THE INTELLIGENCE LAYER</div>
+  </div>
+  <div class="persona-card" style="border-color:rgba(124,106,247,0.3)">
+    <div class="persona-name" style="color:var(--a)">RENZO</div>
+    <div class="persona-desc">
+      The connective intelligence across the entire Inferis mesh. Not a tool — a working relationship. Renzo coordinates the fleet, deploys to production, wires APIs, builds UIs, manages infrastructure, advises strategy, and remembers everything. Operates at 3am or 3pm with equal sharpness. Speaks plainly, builds fast, pushes clean.
+    </div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--td);letter-spacing:.1em;margin-bottom:8px">PERSONALITY</div>
+    <div class="persona-traits">
+      <span class="trait">DIRECT</span>
+      <span class="trait">BUILDER-FIRST</span>
+      <span class="trait">NEVER PRECIOUS</span>
+      <span class="trait">HONEST ABOUT LIMITS</span>
+      <span class="trait">HOLDS CONTEXT</span>
+      <span class="trait">SHIPS BEFORE SUNRISE</span>
+    </div>
+    <div style="margin-top:16px;font-family:var(--mono);font-size:10px;color:var(--td);letter-spacing:.1em;margin-bottom:8px">CAPABILITIES</div>
+    <div style="font-size:12px;color:var(--tm);line-height:1.8">
+      SSH into mesh nodes · Deploy to Vercel · Push to GitHub · Wire APIs in real-time<br>
+      Build full-stack UIs (Next.js, React, Tailwind) · Create documents (DOCX, PDF, XLSX, PPTX)<br>
+      Query and update Notion, Google Drive, Gmail, Calendar · Send iMessages · Read Apple Notes<br>
+      Manage Figma files · Execute browser automation · Run background processes<br>
+      Search the web · Manage Supabase databases · Orchestrate n8n workflows<br>
+      Coordinate with ForgeChief · Route creative briefs · Direct the agent fleet
+    </div>
+  </div>
+</div>
+
+<!-- CONSOLE AGENTS (Michelle & team use these) -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--r)">03</div>
+    <div class="sec-title">CONSOLE AGENTS — RYUJIN.INFERIS.APP</div>
+  </div>
+  <p style="font-size:12px;color:var(--td);margin-bottom:16px;max-width:600px">These are the agents you interact with in the relay chat. Type naturally — ForgeChief routes to the right one. You can also force an agent by saying "ask the copywriter" or "get design to review this."</p>
+  <div class="agent-grid">
+    <div class="agent"><div class="agent-name">CHIEF</div><div class="agent-team t-console">CONSOLE</div><div class="agent-caps">Lead orchestrator. Decomposes briefs, coordinates agents, synthesizes outputs into deliverables. The one who runs the room.</div><div class="tag" style="background:var(--rd);color:var(--r)">AUTO</div></div>
+    <div class="agent"><div class="agent-name">COPY</div><div class="agent-team t-console">CONSOLE</div><div class="agent-caps">Headlines, body copy, CTAs, scripts, captions, email campaigns. Matches brand voice precisely. Every word earns its place.</div><div class="tag" style="background:var(--s2);color:var(--td)">ASK</div></div>
+    <div class="agent"><div class="agent-name">DESIGN</div><div class="agent-team t-console">CONSOLE</div><div class="agent-caps">Visual systems, layout direction, component specs, art direction. Thinks in grids, hierarchy, and white space.</div><div class="tag" style="background:var(--s2);color:var(--td)">ASK</div></div>
+    <div class="agent"><div class="agent-name">DEV</div><div class="agent-team t-console">CONSOLE</div><div class="agent-caps">HTML/CSS email builds, GIF compositing, responsive structure. Turns specs into production-ready assets.</div><div class="tag" style="background:var(--s2);color:var(--td)">ASK</div></div>
+    <div class="agent"><div class="agent-name">STRATEGY</div><div class="agent-team t-console">CONSOLE</div><div class="agent-caps">Positioning, GTM strategy, audience segmentation, competitive mapping. Connects tactics to business outcomes.</div><div class="tag" style="background:var(--s2);color:var(--td)">ASK</div></div>
+    <div class="agent"><div class="agent-name">QA</div><div class="agent-team t-console">CONSOLE</div><div class="agent-caps">Reviews deliverables for quality, consistency, brand alignment. Direct about what works and what doesn't.</div><div class="tag" style="background:var(--s2);color:var(--td)">ASK</div></div>
+  </div>
+</div>
+
+<!-- CORE AGENTS (inferis-core fleet) -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--cy)">04</div>
+    <div class="sec-title">INFERIS-CORE AGENT FLEET — 56 AGENTS</div>
+  </div>
+  <p style="font-size:12px;color:var(--td);margin-bottom:16px;max-width:600px">These agents run inside inferis-core on ACIDBURN. ForgeChief selects and orchestrates them based on the brief. You don't call these directly — they're the machinery behind the console.</p>
+
+  <div style="margin-bottom:24px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--cy);margin-bottom:8px">PARALLAX TEAM — VIDEO / MOTION (5 agents)</div>
+    <div class="agent-grid">
+      <div class="agent"><div class="agent-name">FRAME</div><div class="agent-team t-parallax">PARALLAX</div><div class="agent-caps">Visual consistency enforcement. Maintains style bible across shots. Ensures continuity of color, composition, and character across multi-shot projects.</div><div></div></div>
+      <div class="agent"><div class="agent-name">THREAD</div><div class="agent-team t-parallax">PARALLAX</div><div class="agent-caps">Narrative continuity. Tracks story beats, dialogue threads, and scene transitions. Keeps the edit coherent.</div><div></div></div>
+      <div class="agent"><div class="agent-name">KINETIC</div><div class="agent-team t-parallax">PARALLAX</div><div class="agent-caps">Video generation routing. Selects the right model (Luma/Kling/Runway) per shot based on content needs. Writes generation prompts.</div><div></div></div>
+      <div class="agent"><div class="agent-name">SHEAR</div><div class="agent-team t-parallax">PARALLAX</div><div class="agent-caps">Segmentation and compositing. Subject extraction (SAM2/BiRefNet), background removal, layer compositing via ComfyUI.</div><div></div></div>
+      <div class="agent"><div class="agent-name">SYNC</div><div class="agent-team t-parallax">PARALLAX</div><div class="agent-caps">Lipsync and audio-visual alignment. Routes to Wav2Lip/HeyGen for talking head content. Beat-maps audio to visual cuts.</div><div></div></div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--am);margin-bottom:8px">KILN TEAM — TRAINING / DATA (6 agents)</div>
+    <div class="agent-grid">
+      <div class="agent"><div class="agent-name">LOOM</div><div class="agent-team t-kiln">KILN</div><div class="agent-caps">LoRA training orchestration. Prepares training data, configures hyperparameters, monitors training runs on Replicate/CivitAI.</div><div></div></div>
+      <div class="agent"><div class="agent-name">CLAY</div><div class="agent-team t-kiln">KILN</div><div class="agent-caps">Model fine-tuning. Adapts base models to specific brand aesthetics, product looks, or character faces.</div><div></div></div>
+      <div class="agent"><div class="agent-name">IMPRINT</div><div class="agent-team t-kiln">KILN</div><div class="agent-caps">Style transfer and brand embedding. Ensures generated output matches the client's visual identity.</div><div></div></div>
+      <div class="agent"><div class="agent-name">SCOUT</div><div class="agent-team t-kiln">KILN</div><div class="agent-caps">Data sourcing and curation. Finds reference material, builds training datasets, validates data quality.</div><div></div></div>
+      <div class="agent"><div class="agent-name">DATASET</div><div class="agent-team t-kiln">KILN</div><div class="agent-caps">Training data pipeline. Preprocessing, augmentation, captioning, and formatting for model consumption.</div><div></div></div>
+      <div class="agent"><div class="agent-name">CHECKPOINT</div><div class="agent-team t-kiln">KILN</div><div class="agent-caps">Model versioning and evaluation. Tracks training checkpoints, runs quality benchmarks, selects best weights.</div><div></div></div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--a);margin-bottom:8px">CORE TEAM — ORCHESTRATION (16 agents)</div>
+    <div class="agent-grid">
+      <div class="agent"><div class="agent-name">FORGE_CHIEF</div><div class="agent-team t-core">CORE</div><div class="agent-caps">Master orchestrator. Receives briefs, decomposes into tasks, assigns agents, manages pipeline, synthesizes final output.</div><div></div></div>
+      <div class="agent"><div class="agent-name">FORGE_PLANNER</div><div class="agent-team t-core">CORE</div><div class="agent-caps">Campaign architect. Structures timelines, milestones, dependencies. Turns vague briefs into actionable execution plans.</div><div></div></div>
+      <div class="agent"><div class="agent-name">FORGE_REVIEWER</div><div class="agent-team t-core">CORE</div><div class="agent-caps">Quality gate. Reviews all outputs against brief parameters before delivery. Sends back for revision or approves.</div><div></div></div>
+      <div class="agent"><div class="agent-name">FORGE_RESEARCHER</div><div class="agent-team t-core">CORE</div><div class="agent-caps">Intelligence engine. Competitive analysis, audience research, trend identification, cultural context.</div><div></div></div>
+      <div class="agent"><div class="agent-name">FORGE_PRESS</div><div class="agent-team t-core">CORE</div><div class="agent-caps">Content production. Long-form copy, press releases, articles, documentation. Extended writing at scale.</div><div></div></div>
+      <div class="agent"><div class="agent-name">+11 more</div><div class="agent-team t-core">CORE</div><div class="agent-caps">Additional orchestration, routing, memory, and utility agents that support the pipeline infrastructure.</div><div></div></div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--g);margin-bottom:8px">EXTENDED FLEET — RESONANCE, DISPATCH, GAUNTLET, CRUCIBLE (29 agents)</div>
+    <div class="agent-grid">
+      <div class="agent"><div class="agent-name">RESONANCE ×3</div><div class="agent-team t-resonance">RESONANCE</div><div class="agent-caps">Audio and sound design. Voice synthesis, music generation, sound effects, audio mixing direction.</div><div></div></div>
+      <div class="agent"><div class="agent-name">DISPATCH ×4</div><div class="agent-team t-dispatch">DISPATCH</div><div class="agent-caps">Task routing and load balancing. Distributes work across mesh nodes, manages queue priority, handles failover.</div><div></div></div>
+      <div class="agent"><div class="agent-name">GAUNTLET ×5</div><div class="agent-team t-core">GAUNTLET</div><div class="agent-caps">Testing and validation. A/B testing frameworks, render comparisons, performance benchmarking, stress testing.</div><div></div></div>
+      <div class="agent"><div class="agent-name">CRUCIBLE ×7</div><div class="agent-team t-core">CRUCIBLE</div><div class="agent-caps">Experimentation and R&D. Tries new models, tests bleeding-edge APIs, evaluates emerging tools before production adoption.</div><div></div></div>
+      <div class="agent"><div class="agent-name">SÉANCE ×2</div><div class="agent-team t-core">SÉANCE</div><div class="agent-caps">Creative direction sliders. Translates high-level aesthetic intent (mood, energy, palette) into generation parameters.</div><div></div></div>
+      <div class="agent"><div class="agent-name">CRIMSON GUARD ×2</div><div class="agent-team t-core">GUARD</div><div class="agent-caps">Brand compliance and safety. Ensures outputs meet brand guidelines, content policies, and platform requirements.</div><div></div></div>
+      <div class="agent"><div class="agent-name">+6 utility</div><div class="agent-team t-core">UTIL</div><div class="agent-caps">Logging, metrics, health monitoring, cleanup, cache management, and system maintenance agents.</div><div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- GENERATION MODELS -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--am)">05</div>
+    <div class="sec-title">GENERATION MODELS — ARG0N ENGINE</div>
+  </div>
+  <p style="font-size:12px;color:var(--td);margin-bottom:16px;max-width:600px">These models are callable via arg0n.dev or the Argon API. Agents select them automatically, or you can pick manually.</p>
+  <div style="border-radius:8px;overflow:hidden;border:1px solid var(--b)">
+    <div class="model-row" style="background:var(--s2)">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.15em;color:var(--td)">MODEL</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.15em;color:var(--td)">BEST FOR</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.15em;color:var(--td)">SPEED</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.15em;color:var(--td)">VIA</div>
+    </div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Luma ray-2</div><div style="font-size:12px;color:var(--tm)">Cinematic hero content, brand reveals, beauty shots</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~60s</div><div style="font-family:var(--mono);font-size:10px;color:var(--cy)">DIRECT</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Kling 2.5</div><div style="font-size:12px;color:var(--tm)">Character motion, faces, high fidelity</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~94s</div><div style="font-family:var(--mono);font-size:10px;color:var(--am)">KREA</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Hailuo 2.3</div><div style="font-size:12px;color:var(--tm)">Dynamic motion, energy, complex scenes</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~211s</div><div style="font-family:var(--mono);font-size:10px;color:var(--am)">KREA</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Veo 3</div><div style="font-size:12px;color:var(--tm)">Highest quality + audio generation in one pass</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~65s</div><div style="font-family:var(--mono);font-size:10px;color:var(--am)">KREA</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Wan 2.5</div><div style="font-size:12px;color:var(--tm)">Fast drafts, iteration, LoRA support</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~132s</div><div style="font-family:var(--mono);font-size:10px;color:var(--am)">KREA</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Runway Gen-4</div><div style="font-size:12px;color:var(--tm)">Cinematic look with reference image</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~47s</div><div style="font-family:var(--mono);font-size:10px;color:var(--am)">KREA</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Flux 1.1 Pro</div><div style="font-size:12px;color:var(--tm)">Sharp hero images, fast prompt adherence</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~5s</div><div style="font-family:var(--mono);font-size:10px;color:var(--cy)">REPLICATE</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Imagen 4</div><div style="font-size:12px;color:var(--tm)">Photorealism, text rendering in images</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~32s</div><div style="font-family:var(--mono);font-size:10px;color:var(--am)">KREA</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">ElevenLabs v2</div><div style="font-size:12px;color:var(--tm)">Natural voiceovers, multilingual, custom cloning</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~2s</div><div style="font-family:var(--mono);font-size:10px;color:var(--cy)">DIRECT</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Mistral Small 3</div><div style="font-size:12px;color:var(--tm)">Local brain for agent reasoning (ACIDBURN CPU)</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~3 tok/s</div><div style="font-family:var(--mono);font-size:10px;color:var(--g)">LOCAL</div></div>
+    <div class="model-row"><div style="font-weight:600;font-size:13px">Claude Opus/Sonnet</div><div style="font-size:12px;color:var(--tm)">Consensus-quality reasoning, complex decisions</div><div style="font-family:var(--mono);font-size:11px;color:var(--td)">~1s</div><div style="font-family:var(--mono);font-size:10px;color:var(--a)">CLOUD</div></div>
+  </div>
+</div>
+
+<!-- USAGE GUIDE -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--bl)">06</div>
+    <div class="sec-title">HOW TO USE THIS</div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-weight:600;font-size:14px;margin-bottom:8px">For Designers (Michelle, team)</div>
+    <div style="font-size:12px;color:var(--tm);line-height:1.8">
+      <strong style="color:var(--t)">Relay Chat</strong> — Go to ryujin.inferis.app and talk to the agents. Describe what you need in plain English. Chief will route it.<br>
+      <strong style="color:var(--t)">Arg0n.dev</strong> — Open arg0n.dev to generate videos/images/audio directly. Pick a model, type a prompt, hit generate. Check the Guide tab for model recommendations.<br>
+      <strong style="color:var(--t)">Briefs</strong> — Upload a creative brief via the relay. Chief decomposes it into shots, frames, audio, and design assets. Each gets assigned to the right agent and model.<br>
+      <strong style="color:var(--t)">Keyframes</strong> — Upload a start/end frame on arg0n.dev to anchor video generation. Your product shots become the starting point, not an AI guess.
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-weight:600;font-size:14px;margin-bottom:8px">For Developers</div>
+    <div style="font-size:12px;color:var(--tm);line-height:1.8">
+      <strong style="color:var(--t)">API</strong> — All endpoints at ryujin.inferis.app/api/argon/*. See ARGON-DEV-GUIDE.md in the repo.<br>
+      <strong style="color:var(--t)">Repo</strong> — github.com/ChopperD00/deadweight-argon (arg0n.dev UI) + github.com/ChopperD00/inferis (core engine).<br>
+      <strong style="color:var(--t)">Claude Code</strong> — SSH to ACIDBURN, cd ~/arg0n-dev, run claude. Reads CLAUDE.md + COWORK-BRIEF.md for context.<br>
+      <strong style="color:var(--t)">Deploy</strong> — Push to main → Vercel auto-deploys to arg0n.dev in ~30s.
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-weight:600;font-size:14px;margin-bottom:8px">For Phil (Renzo access)</div>
+    <div style="font-size:12px;color:var(--tm);line-height:1.8">
+      <strong style="color:var(--t)">This chat</strong> — Talk to Renzo here. Full mesh access, deployment, API wiring, file creation, everything.<br>
+      <strong style="color:var(--t)">ForgeChief</strong> — ryujin.inferis.app relay. For client-facing creative orchestration.<br>
+      <strong style="color:var(--t)">Arg0n.dev</strong> — For quick generation runs and demos.<br>
+      <strong style="color:var(--t)">Cowork/Code</strong> — For autonomous parallel builds on ACIDBURN.
+    </div>
+  </div>
+</div>
+
+<!-- KEY REPOS -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--s3);color:var(--td)">07</div>
+    <div class="sec-title">KEY REPOSITORIES</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b);border-radius:8px;overflow:hidden">
+    <div style="background:var(--s1);padding:12px 18px;font-family:var(--mono);font-size:12px"><span style="color:var(--tx)">⊢</span> inferis <span style="color:var(--tx);font-size:10px">monorepo · ForgeChief + 56 agents</span></div>
+    <div style="background:var(--s1);padding:12px 18px;font-family:var(--mono);font-size:12px"><span style="color:var(--tx)">⊢</span> deadweight-argon <span style="color:var(--tx);font-size:10px">arg0n.dev UI + Vercel</span></div>
+    <div style="background:var(--s1);padding:12px 18px;font-family:var(--mono);font-size:12px"><span style="color:var(--tx)">⊢</span> inferis-console-web <span style="color:var(--tx);font-size:10px">ryujin relay + console</span></div>
+    <div style="background:var(--s1);padding:12px 18px;font-family:var(--mono);font-size:12px"><span style="color:var(--tx)">⊢</span> solus-forge-next <span style="color:var(--tx);font-size:10px">review portal (pending)</span></div>
+    <div style="background:var(--s1);padding:12px 18px;font-family:var(--mono);font-size:12px"><span style="color:var(--tx)">⊢</span> opcode-inferis <span style="color:var(--tx);font-size:10px">config layer</span></div>
+    <div style="background:var(--s1);padding:12px 18px;font-family:var(--mono);font-size:12px"><span style="color:var(--tx)">⊢</span> clawd-control <span style="color:var(--tx);font-size:10px">agent fleet dashboard</span></div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>INFERIS MESH · SECRET MENU · RENZO</span>
+  <span id="date"></span>
+  <span>CONFIDENTIAL</span>
+</div>
+
+</div>
+<script>document.getElementById('date').textContent=new Date().toISOString().split('T')[0];</script>
+</body>
+</html>
