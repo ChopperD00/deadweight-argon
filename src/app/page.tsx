@@ -5,7 +5,7 @@ const API = 'https://BUILT BY RENZO · ryujin.inferis.app/api/argon';
 const KREA_API = 'https://api.krea.ai';
 const KREA_KEY = '66eb338a-e1a9-4a69-bc3c-63ee9de86df2:4y-UB7mcv7c1iJTfkrjxHyz-NyJrQgu-';
 
-type Tab = 'video' | 'image' | 'audio';
+type Tab = 'video' | 'image' | 'audio' | 'workflows' | 'guide';
 type Job = {
   id: string; tool: string; status: string; input: any;
   output?: any; error?: string; createdAt: string; completedAt?: string;
@@ -67,6 +67,152 @@ function UploadZone({ label, value, onUpload, onClear }: {
   );
 }
 
+
+function GuidePanel() {
+  return (
+    <div className="max-w-3xl animate-in space-y-8">
+      <div>
+        <h2 className="text-lg font-medium text-white/90 mb-2">What is this?</h2>
+        <p className="text-sm text-white/40 leading-relaxed">
+          Arg0n is a creative generation engine. You describe what you want — a video, an image, a voiceover — pick a model, and it builds it. No code. No exports. No 47-step tutorial. Type, click, get output.
+        </p>
+      </div>
+
+      <div className="border-t border-white/[0.04] pt-8">
+        <h3 className="font-mono text-[10px] tracking-[0.2em] text-white/25 mb-4">WHAT THE MODELS DO</h3>
+        <div className="grid gap-3">
+          {[
+            { icon: '◆', name: 'Luma ray-2', what: 'Cinematic video from text. Best for hero content, brand reveals, product beauty shots. Understands camera language.', when: 'When it needs to look expensive.' },
+            { icon: '◆', name: 'Kling 2.5', what: 'High-fidelity video with strong character consistency. Handles faces and bodies well.', when: 'When there are people in the shot.' },
+            { icon: '◆', name: 'Hailuo 2.3', what: 'Dynamic motion, great camera control. Handles complex scenes with energy.', when: 'When the shot needs movement and life.' },
+            { icon: '◆', name: 'Veo 3', what: 'Google frontier model. Generates video WITH matching audio. Extremely high quality.', when: 'When you need video + sound in one pass.' },
+            { icon: '◆', name: 'Wan 2.5', what: 'Good all-rounder, lower cost. Supports LoRA style training. Native 1080p.', when: 'When you are iterating and not ready to burn credits.' },
+            { icon: '◆', name: 'Runway Gen-4', what: 'Cinematic look, strong visual consistency. Best with a reference image.', when: 'When you have a frame and want to animate it.' },
+            { icon: '◇', name: 'Flux 1.1 Pro', what: 'Fast, sharp image generation. Great prompt adherence.', when: 'When you need a hero image, fast.' },
+            { icon: '◇', name: 'Imagen 4', what: 'Google image model. Excellent photorealism and text rendering.', when: 'When the image needs to look like a photograph.' },
+            { icon: '♫', name: 'ElevenLabs v2', what: 'Text-to-speech with natural inflection. Multilingual. Custom voice cloning.', when: 'When you need a voiceover that sounds human.' },
+          ].map(m => (
+            <div key={m.name} className="bg-surface-1 border border-white/[0.06] rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-accent text-xs">{m.icon}</span>
+                <span className="text-sm font-medium text-white/80">{m.name}</span>
+              </div>
+              <p className="text-xs text-white/35 leading-relaxed mb-2">{m.what}</p>
+              <p className="font-mono text-[10px] text-accent/50">{"↳ " + m.when}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.04] pt-8">
+        <h3 className="font-mono text-[10px] tracking-[0.2em] text-white/25 mb-4">HOW TO THINK ABOUT IT</h3>
+        <div className="space-y-4">
+          {[
+            ['Start with words, not tools', 'Describe the feeling, the mood, the movement. "Slow drift across a dark surface, metallic chain catching light" tells the model more than "product video 16:9." Be a director, not a programmer.'],
+            ['Use keyframes to anchor', 'Upload a start frame and the AI generates motion from your image. Upload start + end frames and it fills the gap. Your assets become the creative brief.'],
+            ['Pick the model for the job', 'Luma for beauty, Kling for people, Hailuo for energy, Veo for audio+video, Wan for drafts, Runway when you have a reference. No "best model" — just the right one for this shot.'],
+            ['Iterate cheap, finish expensive', 'Draft with Wan 2.5 (fast, low cost). When the prompt feels right, regenerate with Kling 2.5 or Veo 3 for the final. Do not burn premium credits finding the angle.'],
+          ].map(([title, body]) => (
+            <div key={title} className="bg-surface-1 border border-white/[0.06] rounded-xl p-5">
+              <div className="font-medium text-sm text-white/70 mb-2">{title}</div>
+              <p className="text-xs text-white/30 leading-relaxed">{body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.04] pt-8">
+        <h3 className="font-mono text-[10px] tracking-[0.2em] text-white/25 mb-4">GLOSSARY</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            ['Prompt', 'The text description of what you want generated'],
+            ['Keyframe', 'A reference image that anchors the start or end of a video'],
+            ['Aspect ratio', 'The shape: 16:9 (wide), 9:16 (vertical), 1:1 (square)'],
+            ['Duration', 'How long the video clip will be (5s, 8s, 10s)'],
+            ['Style reference', 'An image that influences the look without being the subject'],
+            ['LoRA', 'A small trained model that teaches AI a specific style or face'],
+            ['Polling', 'Videos take 30-120s. We check back automatically.'],
+            ['CDN URL', 'The download link for your finished asset'],
+          ].map(([term, def]) => (
+            <div key={term} className="bg-surface-1 border border-white/[0.06] rounded-lg p-3">
+              <div className="font-mono text-[10px] text-accent/60 mb-1">{term}</div>
+              <div className="text-[11px] text-white/25 leading-relaxed">{def}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkflowsPanel() {
+  const nodes = [
+    { x: 60, y: 60, label: 'BRIEF', sub: 'Client input', color: '#7c6af7', w: 140 },
+    { x: 250, y: 40, label: 'PROMPT', sub: 'AI writes from brief', color: '#7c6af7', w: 160 },
+    { x: 250, y: 160, label: 'REFERENCE', sub: 'Upload keyframes', color: '#22d3ee', w: 160 },
+    { x: 470, y: 80, label: 'GENERATE', sub: 'Kling 2.5 video', color: '#f59e0b', w: 150 },
+    { x: 470, y: 210, label: 'GENERATE', sub: 'Flux hero image', color: '#f59e0b', w: 150 },
+    { x: 670, y: 80, label: 'QA', sub: 'Vision review', color: '#4ade80', w: 120 },
+    { x: 670, y: 210, label: 'QA', sub: 'Style check', color: '#4ade80', w: 120 },
+    { x: 840, y: 145, label: 'DELIVER', sub: 'Export to portal', color: '#ef4444', w: 140 },
+  ];
+  return (
+    <div className="max-w-5xl animate-in">
+      <div className="mb-8">
+        <h2 className="text-lg font-medium text-white/90 mb-2">Workflows</h2>
+        <p className="text-sm text-white/30">Connect generation steps into reusable pipelines.</p>
+      </div>
+      <div className="bg-surface-1 border border-white/[0.06] rounded-xl overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.04]">
+          <span className="font-mono text-[10px] tracking-[0.15em] text-white/25">CANVAS</span>
+          <div className="flex gap-1 ml-auto">
+            {['Prompt', 'Generate', 'Review', 'Export'].map(n => (
+              <span key={n} className="px-2 py-1 rounded bg-surface-2 border border-white/[0.04] font-mono text-[9px] text-white/20">{n}</span>
+            ))}
+          </div>
+        </div>
+        <div className="relative h-[420px] bg-surface-0 overflow-hidden" style={{backgroundImage:'radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px)',backgroundSize:'20px 20px'}}>
+          <svg className="absolute inset-0 w-full h-full pointer-events-none">
+            {[[200,90,250,70],[200,90,250,190],[410,70,470,110],[410,190,470,240],[620,110,670,110],[620,240,670,240],[790,110,840,175],[790,240,840,175]].map(([x1,y1,x2,y2],i) => (
+              <path key={i} d={`M${x1},${y1} C${x1+25},${y1} ${x2-25},${y2} ${x2},${y2}`} stroke="rgba(124,106,247,0.15)" strokeWidth="1.5" fill="none" />
+            ))}
+          </svg>
+          {nodes.map((n,i) => (
+            <div key={i} className="absolute rounded-lg border bg-surface-1/90 backdrop-blur-sm p-3 hover:border-white/[0.12] transition-all" style={{left:n.x,top:n.y,width:n.w,borderColor:`${n.color}33`}}>
+              <div className="font-mono text-[9px] tracking-[0.15em] mb-1" style={{color:n.color}}>{n.label}</div>
+              <div className="text-[11px] text-white/30">{n.sub}</div>
+              <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 bg-surface-0" style={{borderColor:`${n.color}66`}} />
+              <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 bg-surface-0" style={{borderColor:`${n.color}66`}} />
+            </div>
+          ))}
+          <div className="absolute inset-0 flex items-end justify-center pb-8 bg-gradient-to-t from-surface-0 via-transparent to-transparent">
+            <div className="text-center">
+              <div className="font-mono text-[10px] tracking-[0.2em] text-white/20 mb-2">NODE EDITOR COMING SOON</div>
+              <p className="text-xs text-white/10 max-w-md">Drag-and-drop workflow builder. Connect prompts to models to QA to delivery. Save as reusable templates.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-6">
+        <h3 className="font-mono text-[10px] tracking-[0.2em] text-white/25 mb-3">TEMPLATE WORKFLOWS</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { name: 'Brand Reveal', steps: 'Brief → Prompt → Luma → QA → Deliver', desc: '15s cinematic brand animation' },
+            { name: 'Social Content', steps: 'Brief → 3x Prompt → Wan 2.5 → Export', desc: 'Rapid 9:16 content batch' },
+            { name: 'Product Hero', steps: 'Upload → Kling i2v → Upscale → Review', desc: 'Image-to-video product showcase' },
+          ].map(w => (
+            <div key={w.name} className="bg-surface-1 border border-white/[0.06] rounded-xl p-4 opacity-50">
+              <div className="text-xs font-medium text-white/50 mb-1">{w.name}</div>
+              <div className="font-mono text-[9px] text-accent/30 mb-2">{w.steps}</div>
+              <div className="text-[10px] text-white/15">{w.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ArgonPage() {
   const [tab, setTab] = useState<Tab>('video');
   const [prompt, setPrompt] = useState('');
@@ -112,7 +258,7 @@ export default function ArgonPage() {
 
   // Update provider when tab changes
   useEffect(() => {
-    setProvider(PROVIDERS[tab][0]);
+    if (tab in PROVIDERS) setProvider(PROVIDERS[tab as keyof typeof PROVIDERS][0]);
   }, [tab]);
 
   // Poll active jobs
@@ -231,17 +377,17 @@ export default function ArgonPage() {
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-8">
         {/* Tab bar */}
         <div className="flex gap-1 mb-8 p-1 bg-surface-1 rounded-lg w-fit">
-          {(['video', 'image', 'audio'] as Tab[]).map(t => (
+          {(['video', 'image', 'audio', 'workflows', 'guide'] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-5 py-2 rounded-md font-mono text-xs tracking-[0.12em] uppercase transition-all ${
                 tab === t ? 'bg-surface-3 text-white shadow-sm' : 'text-white/30 hover:text-white/50'
               }`}>
-              {t === 'video' ? '◆ Video' : t === 'image' ? '◇ Image' : '♫ Audio'}
+              {t === 'video' ? '◆ Video' : t === 'image' ? '◇ Image' : t === 'audio' ? '♫ Audio' : t === 'workflows' ? '⬡ Workflows' : '? Guide'}
             </button>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+        {(tab === 'video' || tab === 'image' || tab === 'audio') && <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
           {/* Left — Generation panel */}
           <div className="space-y-4 animate-in">
             {/* Prompt */}
@@ -267,7 +413,7 @@ export default function ArgonPage() {
             <div className="bg-surface-1 border border-white/[0.06] rounded-xl p-5">
               <label className="block font-mono text-[10px] tracking-[0.2em] text-white/25 mb-3">MODEL</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {PROVIDERS[tab].map(p => (
+                {PROVIDERS[tab as keyof typeof PROVIDERS]?.map(p => (
                   <button key={p.id} onClick={() => setProvider(p)}
                     className={`text-left p-3 rounded-lg border transition-all ${
                       provider.id === p.id
@@ -420,7 +566,10 @@ export default function ArgonPage() {
               );
             })}
           </div>
-        </div>
+        </div>}
+
+        {tab === 'guide' && <GuidePanel />}
+        {tab === 'workflows' && <WorkflowsPanel />}
       </main>
 
       {/* Footer */}
