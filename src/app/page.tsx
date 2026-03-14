@@ -1,4 +1,8 @@
 'use client';
+import dynamic from 'next/dynamic';
+const WorkflowEditor = dynamic(() => import('../components/WorkflowEditor'), { ssr: false,
+  loading: () => <div className="h-[600px] bg-surface-1 rounded-xl flex items-center justify-center font-mono text-[10px] text-white/15">Loading workflow editor...</div>
+});
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API = 'https://BUILT BY RENZO · ryujin.inferis.app/api/argon';
@@ -146,71 +150,7 @@ function GuidePanel() {
 }
 
 function WorkflowsPanel() {
-  const nodes = [
-    { x: 60, y: 60, label: 'BRIEF', sub: 'Client input', color: '#7c6af7', w: 140 },
-    { x: 250, y: 40, label: 'PROMPT', sub: 'AI writes from brief', color: '#7c6af7', w: 160 },
-    { x: 250, y: 160, label: 'REFERENCE', sub: 'Upload keyframes', color: '#22d3ee', w: 160 },
-    { x: 470, y: 80, label: 'GENERATE', sub: 'Kling 2.5 video', color: '#f59e0b', w: 150 },
-    { x: 470, y: 210, label: 'GENERATE', sub: 'Flux hero image', color: '#f59e0b', w: 150 },
-    { x: 670, y: 80, label: 'QA', sub: 'Vision review', color: '#4ade80', w: 120 },
-    { x: 670, y: 210, label: 'QA', sub: 'Style check', color: '#4ade80', w: 120 },
-    { x: 840, y: 145, label: 'DELIVER', sub: 'Export to portal', color: '#ef4444', w: 140 },
-  ];
-  return (
-    <div className="max-w-5xl animate-in">
-      <div className="mb-8">
-        <h2 className="text-lg font-medium text-white/90 mb-2">Workflows</h2>
-        <p className="text-sm text-white/30">Connect generation steps into reusable pipelines.</p>
-      </div>
-      <div className="bg-surface-1 border border-white/[0.06] rounded-xl overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.04]">
-          <span className="font-mono text-[10px] tracking-[0.15em] text-white/25">CANVAS</span>
-          <div className="flex gap-1 ml-auto">
-            {['Prompt', 'Generate', 'Review', 'Export'].map(n => (
-              <span key={n} className="px-2 py-1 rounded bg-surface-2 border border-white/[0.04] font-mono text-[9px] text-white/20">{n}</span>
-            ))}
-          </div>
-        </div>
-        <div className="relative h-[420px] bg-surface-0 overflow-hidden" style={{backgroundImage:'radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px)',backgroundSize:'20px 20px'}}>
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            {[[200,90,250,70],[200,90,250,190],[410,70,470,110],[410,190,470,240],[620,110,670,110],[620,240,670,240],[790,110,840,175],[790,240,840,175]].map(([x1,y1,x2,y2],i) => (
-              <path key={i} d={`M${x1},${y1} C${x1+25},${y1} ${x2-25},${y2} ${x2},${y2}`} stroke="rgba(124,106,247,0.15)" strokeWidth="1.5" fill="none" />
-            ))}
-          </svg>
-          {nodes.map((n,i) => (
-            <div key={i} className="absolute rounded-lg border bg-surface-1/90 backdrop-blur-sm p-3 hover:border-white/[0.12] transition-all" style={{left:n.x,top:n.y,width:n.w,borderColor:`${n.color}33`}}>
-              <div className="font-mono text-[9px] tracking-[0.15em] mb-1" style={{color:n.color}}>{n.label}</div>
-              <div className="text-[11px] text-white/30">{n.sub}</div>
-              <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 bg-surface-0" style={{borderColor:`${n.color}66`}} />
-              <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 bg-surface-0" style={{borderColor:`${n.color}66`}} />
-            </div>
-          ))}
-          <div className="absolute inset-0 flex items-end justify-center pb-8 bg-gradient-to-t from-surface-0 via-transparent to-transparent">
-            <div className="text-center">
-              <div className="font-mono text-[10px] tracking-[0.2em] text-white/20 mb-2">NODE EDITOR COMING SOON</div>
-              <p className="text-xs text-white/10 max-w-md">Drag-and-drop workflow builder. Connect prompts to models to QA to delivery. Save as reusable templates.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="mt-6">
-        <h3 className="font-mono text-[10px] tracking-[0.2em] text-white/25 mb-3">TEMPLATE WORKFLOWS</h3>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { name: 'Brand Reveal', steps: 'Brief → Prompt → Luma → QA → Deliver', desc: '15s cinematic brand animation' },
-            { name: 'Social Content', steps: 'Brief → 3x Prompt → Wan 2.5 → Export', desc: 'Rapid 9:16 content batch' },
-            { name: 'Product Hero', steps: 'Upload → Kling i2v → Upscale → Review', desc: 'Image-to-video product showcase' },
-          ].map(w => (
-            <div key={w.name} className="bg-surface-1 border border-white/[0.06] rounded-xl p-4 opacity-50">
-              <div className="text-xs font-medium text-white/50 mb-1">{w.name}</div>
-              <div className="font-mono text-[9px] text-accent/30 mb-2">{w.steps}</div>
-              <div className="text-[10px] text-white/15">{w.desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  return <WorkflowEditor />;
 }
 
 export default function ArgonPage() {
