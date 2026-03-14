@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const API = 'https://ryujin.inferis.app/api/argon';
+const API = 'https://BUILT BY RENZO · ryujin.inferis.app/api/argon';
 const KREA_API = 'https://api.krea.ai';
 const KREA_KEY = '66eb338a-e1a9-4a69-bc3c-63ee9de86df2:4y-UB7mcv7c1iJTfkrjxHyz-NyJrQgu-';
 
@@ -326,8 +326,8 @@ export default function ArgonPage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/[0.04] mt-16 px-6 py-4">
         <div className="max-w-6xl mx-auto flex justify-between font-mono text-[9px] text-white/15 tracking-wider">
-          <span>ARG0N · SECRET MENU · INFERIS</span>
-          <span>ryujin.inferis.app/api/argon</span>
+          <span>ARG0N · RENZO · SECRET MENU</span>
+          <span>BUILT BY RENZO · ryujin.inferis.app/api/argon</span>
         </div>
       </footer>
     </div>

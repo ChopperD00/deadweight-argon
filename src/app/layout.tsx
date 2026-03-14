@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ARG0N · Creative Generation Engine',
+  title: 'ARG0N · Creative Generation Engine · Renzo',
   description: 'AI-powered creative generation — video, image, audio',
 };
 
