@@ -124,3 +124,32 @@ This is Secret Menu's creative generation engine (Inferis/Chimera).
 The UI should feel like a professional creative tool, not a chatbot.
 Think: Flora's canvas aesthetic + Diagram's tool-first UX.
 Minimal chrome. Let the outputs breathe. Every pixel earned.
+
+---
+
+## P5 — PRODUCT DIFFERENTIATORS (circle back — Phil's priority)
+
+These are the two features Phil considers the biggest gaps in the entire AI gen space. Nobody is handling these well. This is where arg0n becomes more than another generation UI.
+
+### 5A. Upload + Reference System
+- Upload image/video as start frame, end frame, or style reference
+- Motion transfer: upload a video, extract motion, apply to new generation
+- Inspiration board: drag in references that inform but don't dictate
+- Krea supports startImage/endImage on most video models — wire that
+- Luma supports keyframes (frame0/frame1) — already in argon.ts
+- This is the bridge between "generate from nothing" and "generate from MY thing"
+
+### 5B. Persistent Workspace + Asset Library
+- Saved workflows: prompt + model + params + output = reusable recipe
+- Generation history with thumbnails, searchable, filterable
+- Asset library: every generated image/video/audio lives in a project
+- Project context: new generations can reference past outputs as inputs
+- Cross-project consistency: brand assets, style references, character sheets carry forward
+- This is where Krea/Runway/Flora all fall short — they're session-based, not project-based
+- Backend: Supabase (already configured on Ryujin) for persistence
+- Storage: Supabase Storage or S3 for asset CDN
+
+### Why This Matters
+Every tool treats each generation as isolated. But creative work is cumulative.
+A brand reveal informs the social content which informs the email which informs the next campaign.
+The tool that connects generations into a living project graph wins the market.
